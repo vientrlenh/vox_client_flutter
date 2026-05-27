@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 
 import '../../../core/network/api_client.dart';
@@ -8,28 +7,56 @@ import '../data/auth_repository.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
-  
+
   @override
   State<StatefulWidget> createState() => _LoginScreenState();
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  final _formKey = GlobalKey<FormState>();
   final _loginController = TextEditingController();
   final _passwordController = TextEditingController();
   bool rememberMe = true;
   bool obscurePassword = true;
+  bool isLoggingIn = false;
 
   final _authRepository = AuthRepository(
     authApi: AuthApi(ApiClient()),
-    secureStorage: SecureStorage()
+    secureStorage: SecureStorage(),
   );
 
   Future<void> _login() async {
-    try {
-      await _authRepository.login(login: _loginController.text, password: _passwordController.text);
-    } catch (e) {
+    if (!_formKey.currentState!.validate() || isLoggingIn) {
       return;
     }
+
+    setState(() => isLoggingIn = true);
+
+    try {
+      await _authRepository.login(
+        login: _loginController.text.trim(),
+        password: _passwordController.text,
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.'),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => isLoggingIn = false);
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _loginController.dispose();
+    _passwordController.dispose();
+    super.dispose();
   }
 
   @override
@@ -41,7 +68,7 @@ class _LoginScreenState extends State<LoginScreen> {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [Color(0xFF06135F), Color(0xFF10108C), Color(0xFF5207D8)],
-          )
+          ),
         ),
         child: Stack(
           children: [
@@ -55,7 +82,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       'assets/logo.png',
                       width: 100,
                       height: 70,
-                      fit: BoxFit.contain
+                      fit: BoxFit.contain,
                     ),
                     const SizedBox(height: 30),
                     const Text(
@@ -63,17 +90,17 @@ class _LoginScreenState extends State<LoginScreen> {
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 38,
-                        fontWeight: FontWeight.w700
-                      )
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                     const SizedBox(height: 12),
                     const Text.rich(
                       TextSpan(
                         text: 'Đăng nhập để tiếp tục quản lý và ',
                         style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
                         ),
                         children: [
                           TextSpan(
@@ -81,33 +108,30 @@ class _LoginScreenState extends State<LoginScreen> {
                             style: TextStyle(
                               color: Colors.blue,
                               fontSize: 18,
-                              fontWeight: FontWeight.w600
-                            )
-                          )
-                        ]
-                      ) 
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                     const SizedBox(height: 36),
-                    _buildLoginCard(),
+                    Form(key: _formKey, child: _buildLoginCard()),
                     const SizedBox(height: 26),
                     const Text(
                       '© 2026 VOX. Tất cả quyền được bảo lưu.',
                       textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Color(0x99FFFFFF),
-                        fontSize: 14
-                      )
-                    )
+                      style: TextStyle(color: Color(0x99FFFFFF), fontSize: 14),
+                    ),
                   ],
-                )
-              )
-            )
+                ),
+              ),
+            ),
           ],
         ),
-      )
+      ),
     );
   }
-  
+
   Widget _buildLoginCard() {
     return Container(
       padding: const EdgeInsets.fromLTRB(22, 26, 22, 28),
@@ -117,10 +141,10 @@ class _LoginScreenState extends State<LoginScreen> {
         boxShadow: const [
           BoxShadow(
             color: Color(0x33000000),
-            blurRadius: 24, 
-            offset: Offset(0, 16)
-          )
-        ]
+            blurRadius: 24,
+            offset: Offset(0, 16),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -128,67 +152,65 @@ class _LoginScreenState extends State<LoginScreen> {
           _label('Email / Số điện thoại'),
           const SizedBox(height: 10),
           _field(
-            Icons.mail_outline_rounded, 
-            'Nhập email hoặc số điện thoại của bạn'
+            Icons.mail_outline_rounded,
+            'Nhập email hoặc số điện thoại của bạn',
           ),
           const SizedBox(height: 10),
           _label("Mật khẩu"),
           const SizedBox(height: 10),
           _field(
-            Icons.lock_outline_rounded, 
+            Icons.lock_outline_rounded,
             'Nhập mật khẩu',
-            obscure: obscurePassword, 
+            obscure: obscurePassword,
             suffix: IconButton(
-              onPressed: () => setState(() => obscurePassword = !obscurePassword
-              ), 
+              onPressed: () =>
+                  setState(() => obscurePassword = !obscurePassword),
               icon: Icon(
-                obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                obscurePassword
+                    ? Icons.visibility_off_outlined
+                    : Icons.visibility_outlined,
                 color: const Color(0xFF697083),
-              )
-            )
+              ),
+            ),
           ),
           const SizedBox(height: 16),
           Row(
             children: [
               Checkbox(
                 value: rememberMe,
-                onChanged: (value) => setState(() => rememberMe = value ?? false),
+                onChanged: (value) =>
+                    setState(() => rememberMe = value ?? false),
                 activeColor: const Color(0xFF2563EB),
               ),
               const Expanded(
                 child: Text(
                   'Ghi nhớ đăng nhập',
-                  style: TextStyle(
-                    fontSize: 16, 
-                    fontWeight: FontWeight.w600
-                  )
-                )
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                ),
               ),
               TextButton(
-                onPressed: (){},
+                onPressed: () {},
                 child: const Text(
                   'Quên mật khẩu?',
                   style: TextStyle(
-                    color: Color(0xFF5B21D9), 
-                    fontWeight: FontWeight.w600
-                  )
-                )
-              )
+                    color: Color(0xFF5B21D9),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 15),
           DecoratedBox(
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [Color(0xFF1688FF), Color(0xFF7517F8)]
+                colors: [Color(0xFF1688FF), Color(0xFF7517F8)],
               ),
               borderRadius: BorderRadius.circular(10),
             ),
             child: ElevatedButton.icon(
-              onPressed: () => _login(),
-              icon: const Icon(
-                Icons.arrow_forward_rounded
-              ),
+              onPressed: isLoggingIn ? null : _login,
+              icon: const Icon(Icons.arrow_forward_rounded),
               label: Text('Đăng nhập'),
               style: ElevatedButton.styleFrom(
                 elevation: 0,
@@ -196,10 +218,10 @@ class _LoginScreenState extends State<LoginScreen> {
                 backgroundColor: Colors.transparent,
                 minimumSize: const Size.fromHeight(56),
                 textStyle: const TextStyle(
-                  fontSize: 18, 
-                  fontWeight: FontWeight.w800
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
                 ),
-              )
+              ),
             ),
           ),
           const SizedBox(height: 15),
@@ -217,7 +239,7 @@ class _LoginScreenState extends State<LoginScreen> {
           OutlinedButton(
             onPressed: () {},
             style: OutlinedButton.styleFrom(
-              minimumSize: const Size.fromHeight(52)
+              minimumSize: const Size.fromHeight(52),
             ),
             child: const Text(
               'G Đăng nhập bằng Google',
@@ -235,40 +257,57 @@ class _LoginScreenState extends State<LoginScreen> {
                     text: 'Liên hệ nhà trường / Đăng ký',
                     style: TextStyle(
                       color: Color(0xFF5B21D9),
-                      fontWeight: FontWeight.w700
-                    )
-                  )
-                ]
-              )
-            )
-          )
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
-      )
+      ),
     );
   }
 
   Widget _label(String text) {
     return Text(
-      text, 
-      style: const TextStyle(
-        fontSize: 16,
-        fontWeight: FontWeight.w700
-      )
+      text,
+      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
     );
   }
 
-  Widget _field(IconData icon, String hint, {bool obscure = false, Widget? suffix}) {
-    return TextField(
+  Widget _field(
+    IconData icon,
+    String hint, {
+    bool obscure = false,
+    Widget? suffix,
+  }) {
+    final isPasswordField = icon == Icons.lock_outline_rounded;
+    final controller = isPasswordField ? _passwordController : _loginController;
+
+    return TextFormField(
+      controller: controller,
       obscureText: obscure,
+      keyboardType: isPasswordField ? null : TextInputType.emailAddress,
+      textInputAction: isPasswordField
+          ? TextInputAction.done
+          : TextInputAction.next,
+      onFieldSubmitted: isPasswordField ? (_) => _login() : null,
+      validator: (value) {
+        if (value == null || value.trim().isEmpty) {
+          return isPasswordField
+              ? 'Vui lòng nhập mật khẩu'
+              : 'Vui lòng nhập email hoặc số điện thoại';
+        }
+
+        return null;
+      },
       decoration: InputDecoration(
         hintText: hint,
         prefixIcon: Icon(icon),
         suffixIcon: suffix,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10)
-        )
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
       ),
     );
   }
 }
-
