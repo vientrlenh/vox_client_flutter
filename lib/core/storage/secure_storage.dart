@@ -26,4 +26,8 @@ class SecureStorage {
   Future<void> clearRefreshToken() {
     return _storage.delete(key: 'refresh_token');
   }
+
+  Future<void> saveDeviceId(String deviceId) {
+    return _storage.write(key: 'device_id', value: deviceId);
+  }
 }

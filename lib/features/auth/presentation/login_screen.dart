@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../app/router.dart';
+import '../../../core/device/device_info_service.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/storage/secure_storage.dart';
 import '../data/auth_api.dart';
@@ -20,13 +22,15 @@ class _LoginScreenState extends State<LoginScreen> {
   bool obscurePassword = true;
   bool isLoggingIn = false;
 
+
   final _authRepository = AuthRepository(
     authApi: AuthApi(ApiClient()),
     secureStorage: SecureStorage(),
   );
 
   Future<void> _login() async {
-    if (!_formKey.currentState!.validate() || isLoggingIn) {
+    final deviceInfo = await DeviceInfoService().getDeviceInfo();
+    if (!_formKey.currentState!.validate() || isLoggingIn || deviceInfo == null) {
       return;
     }
 
@@ -36,7 +40,10 @@ class _LoginScreenState extends State<LoginScreen> {
       await _authRepository.login(
         login: _loginController.text.trim(),
         password: _passwordController.text,
+        device: deviceInfo
       );
+      if (!mounted) return;
+      Navigator.pushReplacementNamed(context, AppRouter.profile);
     } catch (e) {
       if (!mounted) return;
 
