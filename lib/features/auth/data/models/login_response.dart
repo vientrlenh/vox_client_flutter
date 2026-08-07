@@ -1,6 +1,6 @@
 class LoginResponse {
   final String accessToken;
-  final String refreshToken;
+  final String? refreshToken;
 
   const LoginResponse({
     required this.accessToken,
@@ -9,8 +9,8 @@ class LoginResponse {
 
   factory LoginResponse.fromJson(Map<String, dynamic> json) {
     return LoginResponse(
-      accessToken: json['accessToken'] as String, 
-      refreshToken: json['refreshToken'] as String
+      accessToken: json['accessToken'] as String,
+      refreshToken: json['refreshToken'] as String?
     );
   }
 

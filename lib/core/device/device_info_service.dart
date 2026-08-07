@@ -9,6 +9,8 @@ class DeviceInfoService {
   static const _uuid = Uuid(); 
   static const _androidPlatform = "android";
   static const _iosPlatform = "ios";
+  static const _webPlatform = "web";
+  static const _desktopPlatform = "desktop";
 
   Future<DeviceInfo?> getDeviceInfo() async {
     if (defaultTargetPlatform == TargetPlatform.android) {
@@ -17,7 +19,13 @@ class DeviceInfoService {
     if (defaultTargetPlatform == TargetPlatform.iOS) {
       return await _getIosInfo();
     }
-    return null;
+    if (kIsWeb) {
+      return DeviceInfo(deviceId: _uuid.v7(), deviceName: 'Web browser', platform: _webPlatform);
+    }
+    // desktop platforms (linux/macos/windows) share one device_info_plus
+    // call and one SessionPlatform value; split per-OS if device_info_plus fields
+    // ever need to differ (e.g. showing the real hostname to the user).
+    return DeviceInfo(deviceId: _uuid.v7(), deviceName: 'Desktop', platform: _desktopPlatform);
   }
 
   Future<DeviceInfo> _getAndroidInfo() async {

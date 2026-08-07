@@ -1,0 +1,366 @@
+{
+  "@@locale": "vi",
+  "profileTitle": "Hồ sơ",
+  "defaultUserName": "Người dùng",
+  "statusActive": "Hoạt động",
+  "roleSystemAdmin": "Quản trị hệ thống",
+  "roleSchoolAdmin": "Quản trị trường",
+  "roleTeacher": "Giáo viên",
+  "roleStudent": "Học sinh",
+  "statPracticesDone": "Bài đã luyện",
+  "statAverageScore": "Điểm trung bình",
+  "statDayStreak": "Chuỗi ngày",
+  "sectionAccount": "Tài khoản",
+  "sectionSettings": "Cài đặt",
+  "menuMyResults": "Kết quả của tôi",
+  "menuRecordings": "Bản ghi âm",
+  "menuAppeals": "Khiếu nại & Chấm lại",
+  "menuLanguage": "Ngôn ngữ",
+  "menuNotifications": "Thông báo",
+  "menuLogOut": "Đăng xuất",
+  "profileLoadError": "Không thể tải thông tin hồ sơ.",
+  "chooseLanguage": "Chọn ngôn ngữ",
+  "languageEnglish": "Tiếng Anh",
+  "languageVietnamese": "Tiếng Việt",
+  "navHome": "Trang chủ",
+  "navSchedule": "Lịch",
+  "navProfile": "Hồ sơ",
+  "greetingLateNight": "Luyện tập khuya nhỉ?",
+  "greetingMorning": "Buổi sáng tốt lành",
+  "greetingAfternoon": "Chào buổi chiều",
+  "greetingEvening": "Chào buổi tối",
+  "homeContinueLearning": "Tiếp tục với",
+  "homeExamsToComplete": "Bài cần hoàn thành",
+  "homeNoExamsLeft": "Không còn bài nào cần hoàn thành",
+  "homeNoDateSet": "Chưa có ngày",
+  "homeNotCompleted": "Chưa hoàn thành",
+  "homeSearchLessons": "Tìm bài học…",
+  "homeResume": "Tiếp tục →",
+  "notificationsTitle": "Thông báo",
+  "notificationsMarkAllRead": "Đánh dấu đã đọc tất cả",
+  "notificationsGroupNew": "Mới",
+  "notificationsGroupEarlier": "Trước đó",
+  "scheduleTitle": "Lịch của bạn",
+  "scheduleLoadError": "Không thể tải lịch của bạn.\n{error}",
+  "@scheduleLoadError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "scheduleRetry": "Thử lại",
+  "scheduleToday": "Hôm nay · {date}",
+  "@scheduleToday": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "scheduleNoSessionsToday": "Không có buổi nào hôm nay.",
+  "scheduleTomorrow": "Ngày mai · {date}",
+  "@scheduleTomorrow": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "scheduleNoSessionsTomorrow": "Không có buổi nào ngày mai.",
+  "scheduleOnDate": "{weekday} · {date}",
+  "@scheduleOnDate": {
+    "placeholders": { "weekday": { "type": "String" }, "date": { "type": "String" } }
+  },
+  "scheduleNoSessionsOnDate": "Không có buổi nào ngày này.",
+  "scheduleKindCentralized": "Kiểm tra tập trung",
+  "scheduleKindClassTest": "Kiểm tra trên lớp",
+  "scheduleTimeUnset": "--:--",
+  "scheduleJumpToday": "Hôm nay",
+  "scheduleLegendHasSession": "Có buổi kiểm tra",
+  "scheduleRoomLabel": "Phòng {room}",
+  "@scheduleRoomLabel": {
+    "placeholders": {
+      "room": {
+        "type": "String"
+      }
+    }
+  },
+  "scheduleStatusOpen": "Đang diễn ra",
+  "scheduleStatusUpcoming": "Sắp tới",
+  "scheduleStatusClosed": "Đã kết thúc",
+  "teacherExamClassTestsTab": "Kiểm tra trên lớp",
+  "teacherExamCentralizedTab": "Tập trung",
+  "teacherExamKindClassTest": "Kiểm tra trên lớp",
+  "teacherExamCentralizedSection": "Kiểm tra tập trung",
+  "teacherExamNoClassTests": "Chưa có bài kiểm tra nào.",
+  "teacherExamNoCentralizedExams": "Bạn chưa được phân công kiểm tra tập trung nào.",
+  "teacherExamStatusDraft": "Bản nháp",
+  "teacherExamStatusScheduled": "Đã lên lịch",
+  "teacherExamStatusInProgress": "Đang diễn ra",
+  "teacherExamStatusClosed": "Đã đóng",
+  "teacherExamStatusResultsPublished": "Đã công bố kết quả",
+  "teacherExamStatusCancelled": "Đã hủy",
+  "teacherExamActionSchedule": "Lên lịch",
+  "teacherExamActionCancel": "Hủy",
+  "teacherExamActionStart": "Bắt đầu",
+  "teacherExamActionClose": "Đóng",
+  "teacherExamActionPublishResults": "Công bố kết quả",
+  "classTestUpdateStatusError": "Không thể cập nhật trạng thái.",
+  "classTestDeleteTitle": "Xóa bài kiểm tra?",
+  "classTestDeleteBody": "Thao tác này sẽ xóa vĩnh viễn \"{name}\".",
+  "@classTestDeleteBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "classTestCancel": "Hủy",
+  "classTestDelete": "Xóa",
+  "classTestDeleteError": "Không thể xóa bài kiểm tra.",
+  "classTestOpens": "Mở lúc",
+  "classTestCloses": "Đóng lúc",
+  "classTestNotSet": "Chưa đặt",
+  "classTestActions": "Hành động",
+  "classTestNameRequired": "Tên là bắt buộc.",
+  "classTestSelectClass": "Chọn một lớp.",
+  "classTestSelectQuestion": "Chọn ít nhất một câu hỏi.",
+  "classTestSaveError": "Không thể lưu bài kiểm tra.",
+  "classTestEditTitle": "Chỉnh sửa bài kiểm tra",
+  "classTestNewTitle": "Bài kiểm tra mới",
+  "classTestNameLabel": "Tên",
+  "classTestDescriptionLabel": "Mô tả",
+  "classTestClassLabel": "Lớp",
+  "classTestOpensAt": "Mở lúc",
+  "classTestClosesAt": "Đóng lúc",
+  "classTestQuestions": "Câu hỏi",
+  "classTestQuestionsSelected": "Đã chọn {count}",
+  "@classTestQuestionsSelected": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "classTestSaveButton": "Lưu",
+  "classTestCreateButton": "Tạo bài kiểm tra",
+  "centralizedExamBlueprint": "Đề thi mẫu",
+  "centralizedExamMembers": "Thành viên",
+  "centralizedExamNoMembers": "Chưa có thành viên nào.",
+  "questionPickerLoadError": "Không thể tải câu hỏi.",
+  "questionPickerTitle": "Chọn câu hỏi",
+  "questionPickerDone": "Xong ({count})",
+  "@questionPickerDone": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "questionPickerSearchHint": "Tìm kiếm câu hỏi",
+  "navPractice": "Luyện nói",
+  "pzPreparingQuestions": "Đang chuẩn bị câu hỏi riêng cho chủ đề này…\nMất khoảng 10-20 giây cho lần đầu.",
+  "pzRetry": "Thử lại",
+  "pzLoadError": "Không thể tải phần ôn luyện cá nhân hoá.",
+  "pzSeeAll": "Tất cả",
+  "pzMinutes": "{count} phút",
+  "@pzMinutes": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "pzHomeSessionToday": "PHIÊN HÔM NAY",
+  "pzHomePersonalizedBadge": "CÁ NHÂN HOÁ",
+  "pzHomeSessionMeta": "Hội thoại 1-1 với AI",
+  "pzHomeStartSpeaking": "Bắt đầu nói",
+  "pzHomeChangeTopic": "Đổi chủ đề",
+  "pzHomeStatSessions": "Buổi đã nói",
+  "pzHomeStatAverage": "Điểm TB",
+  "pzHomeStatWeeklyGoal": "Buổi tuần này",
+  "pzHomeNoTopicYet": "Chưa có gợi ý nào — chọn 1 chủ đề để bắt đầu nhé",
+  "pzHomeSuggestions": "Gợi ý cho bạn",
+  "pzPreparingTopics": "Đang tìm chủ đề hợp với bạn…",
+  "pzPreparingHint": "Lần đầu có thể lâu hơn chút vì đang soạn mới.",
+  "pzTopicsPreparing": "Hệ thống đang tổng hợp thông tin của bạn",
+  "pzTopicsPreparingBody": "Chủ đề riêng đang được soạn dựa trên bài khảo sát vừa làm. Quay lại sau 1-2 phút nhé.",
+  "pzTopicsRefresh": "Tải lại",
+  "pzTopicsTitle": "Chủ đề luyện nói",
+  "pzTopicsSearchHint": "Tìm chủ đề, kỹ năng…",
+  "pzTopicsFilterForYou": "Cho bạn",
+  "pzTopicsFilterSaved": "Đã lưu",
+  "pzTopicsRandom": "Chọn ngẫu nhiên",
+  "pzTopicsSave": "Lưu chủ đề",
+  "pzTopicsUnsave": "Bỏ lưu",
+  "pzTopicsPriority": "ƯU TIÊN #1",
+  "pzTopicsMatch": "Khớp {percent}%",
+  "@pzTopicsMatch": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "pzTopicsSpeakThis": "Nói chủ đề này",
+  "pzTopicsOtherSuggestions": "Gợi ý khác",
+  "pzTopicsEmpty": "Chưa có chủ đề nào trong danh sách này.",
+  "pzTopicsFooterTip": "Danh sách này tự đổi sau mỗi buổi nói — dựa trên chủ đề bạn hào hứng và điểm số gần đây.",
+  "pzTopicsWhy": "Vì sao?",
+  "pzSessionSpoken": "Đã nói · {spoken} / {budget}",
+  "@pzSessionSpoken": {
+    "description": "Header phiên luyện: số giây học sinh THẬT SỰ nói so với ngân sách nói của phiên. Không phải đồng hồ đếm -- lúc AI nói hay học sinh nghĩ đều không tính.",
+    "placeholders": {
+      "spoken": {
+        "type": "String"
+      },
+      "budget": {
+        "type": "String"
+      }
+    }
+  },
+  "pzSessionLive": "Đang nói · {time}",
+  "@pzSessionLive": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "pzSessionCorrectNow": "SỬA NGAY · {count} ĐIỂM",
+  "@pzSessionCorrectNow": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "pzSessionKnownWeakness": "Điểm yếu đã biết · lần thứ {count}",
+  "@pzSessionKnownWeakness": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "pzSessionHearCorrect": "Nghe câu đúng",
+  "pzSessionContinue": "Tiếp tục",
+  "pzSessionRecording": "Đang ghi âm câu trả lời…",
+  "pzSessionTapToSpeak": "Bấm mic để trả lời",
+  "pzSessionThinking": "Đang nghe bạn nói…",
+  "pzSessionFinish": "Kết thúc buổi",
+  "pzSessionMicDenied": "Cần quyền micro để ghi âm câu trả lời của bạn.",
+  "pzSessionRecordError": "Không bắt đầu ghi âm được. Vui lòng thử lại.",
+  "pzSessionExitTitle": "Thoát buổi nói?",
+  "pzSessionExitBody": "Tiến trình của buổi này sẽ không được lưu.",
+  "pzSessionExitStay": "Nói tiếp",
+  "pzSessionExitLeave": "Thoát",
+  "pzSessionPlaybackUnavailable": "Chưa có bản ghi âm nào.",
+  "pzSessionNoSampleAudio": "Chưa có audio mẫu cho câu này.",
+  "pzSessionTurnSaveFailed": "Không lưu được lượt trả lời vừa rồi. Vui lòng thử lại.",
+  "pzSessionEndedQuotaExceeded": "Bạn đã dùng hết hạn mức luyện tập. Buổi luyện đã kết thúc.",
+  "pzSessionReconnectFailed": "Mất kết nối và không thể kết nối lại. Buổi luyện đã kết thúc.",
+  "pzSummaryTitle": "Tổng kết buổi nói",
+  "pzSummaryHeader": "{topic} · {minutes} PHÚT",
+  "@pzSummaryHeader": {
+    "placeholders": {
+      "topic": {
+        "type": "String"
+      },
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "pzSummaryDelta": "{delta} so với buổi trước",
+  "@pzSummaryDelta": {
+    "placeholders": {
+      "delta": {
+        "type": "String"
+      }
+    }
+  },
+  "pzSummaryRubric": "Rubric · 5 tiêu chí",
+  "pzSummaryRubricLegend": "trọng số · điểm /10",
+  "pzSummaryPronunciation": "Từ phát âm chưa đạt",
+  "pzSummaryPronunciationEmpty": "Không có từ nào bị chấm dưới ngưỡng trong buổi này.",
+  "pzSummaryWorstPhoneme": "Âm /{phoneme}/ · {percent}%",
+  "@pzSummaryWorstPhoneme": {
+    "description": "Âm vị yếu nhất trong một từ phát âm chưa đạt -- chính là chỗ sai.",
+    "placeholders": {
+      "phoneme": {
+        "type": "String"
+      },
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "pzSummaryRepeatedErrors": "Lỗi lặp lại trong buổi",
+  "pzSummaryDrill": "Luyện lại {count} lỗi này · {minutes} phút",
+  "@pzSummaryDrill": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "pzSummaryReplay": "Nghe lại ghi âm",
+  "pzLearningProfile": "Hồ sơ học tập",
+  "pzLearningProfileHint": "Điểm trung bình và các buổi gần đây",
+  "pzHistoryTitle": "Lịch sử luyện tập",
+  "pzHistoryEmpty": "Chưa có phiên luyện tập nào",
+  "pzOnboardingIntroTitle": "Cùng dựng hồ sơ nói của bạn",
+  "pzOnboardingIntroBody": "Trả lời vài câu hỏi nhanh để mỗi buổi luyện đều được chọn riêng cho bạn — đúng trình độ, đúng sở thích, đúng điểm yếu.",
+  "pzOnboardingIntroStart": "Bắt đầu",
+  "pzOnboardingIntroDuration": "Khoảng 3 phút · không có đáp án đúng",
+  "pzOnboardingQuizTitle": "Phong cách học của bạn",
+  "pzOnboardingProgress": "{current}/{total}",
+  "@pzOnboardingProgress": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "pzOnboardingQuizTip": "Không có đáp án đúng — trả lời thật để lộ trình bám đúng bạn.",
+  "pzOnboardingBack": "Quay lại",
+  "pzOnboardingContinue": "Tiếp tục",
+  "pzOnboardingSkip": "Bỏ qua",
+  "pzOnboardingInterestsTitle": "Sở thích & mục tiêu",
+  "pzOnboardingInterestsHeading": "Bạn muốn nói về điều gì?",
+  "pzOnboardingInterestsBody": "Chọn ít nhất 3 chủ đề. Mình sẽ lấy đúng những thứ này làm nội dung luyện nói — và tự cập nhật khi bạn nói nhiều hơn về chủ đề khác.",
+  "pzOnboardingMainGoal": "Mục tiêu chính",
+  "pzOnboardingContinueWithCount": "Tiếp tục · đã chọn {count} chủ đề",
+  "@pzOnboardingContinueWithCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "pzOnboardingPickThree": "Chọn ít nhất 3 chủ đề",
+  "pzOnboardingProfileHeader": "HỒ SƠ HỌC TẬP CỦA BẠN",
+  "pzOnboardingCefr": "CEFR ước lượng",
+  "pzOnboardingFlas": "Thái độ & động lực (FLAS)",
+  "pzOnboardingRoadmap": "Lộ trình 4 tuần đề xuất",
+  "pzOnboardingStartFirst": "Bắt đầu buổi đầu tiên",
+  "pzOnboardingRestart": "Làm lại onboarding luyện nói",
+  "pzGoalTitle": "Mục tiêu luyện tập",
+  "pzGoalExamPrep": "Luyện thi",
+  "pzGoalAbilityImprovement": "Tăng kỹ năng",
+  "pzGoalUpdateError": "Không thể đổi mục tiêu luyện tập, thử lại nhé",
+  "pzInterestQuizTitle": "Khám phá sở thích của bạn",
+  "pzInterestQuizHeading": "Trong 3 việc dưới đây…",
+  "pzInterestQuizBody": "Chọn việc giống mình nhất và việc ít giống mình nhất. Không có đáp án đúng.",
+  "pzInterestQuizMostLike": "Giống mình nhất",
+  "pzInterestQuizLeastLike": "Ít giống mình nhất",
+  "pzInterestQuizSubmitError": "Không gửi được câu trả lời, thử lại nhé"
+}
