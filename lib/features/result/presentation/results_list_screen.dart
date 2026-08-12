@@ -86,15 +86,22 @@ class _ResultsListCoreState extends State<_ResultsListCore> {
         title: Text(widget.title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.dark)),
         centerTitle: true,
       ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : _error != null
-              ? Center(child: Column(mainAxisSize: MainAxisSize.min, children: [Text(_error!, style: const TextStyle(color: AppColors.muted)), TextButton(onPressed: () => _load(refresh: true), child: const Text('Thử lại'))]))
-              : _groups.isEmpty
-                  ? const Center(child: Text('Chưa có kết quả.', style: TextStyle(color: AppColors.muted)))
-                  : RefreshIndicator(
-                      onRefresh: () => _load(refresh: true),
-                      child: ListView.separated(
+      // RefreshIndicator bọc NGOÀI cả ba nhánh. Bản cũ đặt nó bên trong nhánh "đã có dữ liệu",
+      // nên đúng trạng thái cần làm mới nhất -- danh sách rỗng vì điểm chưa công bố lúc mở --
+      // lại là trạng thái duy nhất không kéo được. Cộng với nút "Thử lại" chỉ hiện khi LỖI (mà
+      // rỗng thì không phải lỗi), màn hình thành ngõ cụt: không còn thao tác nào gọi lại mạng.
+      body: RefreshIndicator(
+        onRefresh: () => _load(refresh: true),
+        child: _loading
+            ? const Center(child: CircularProgressIndicator())
+            : _error != null
+                ? _FullHeightMessage(
+                    message: _error!,
+                    action: TextButton(onPressed: () => _load(refresh: true), child: const Text('Thử lại')),
+                  )
+                : _groups.isEmpty
+                    ? const _FullHeightMessage(message: 'Chưa có kết quả.\nKéo xuống để tải lại.')
+                    : ListView.separated(
                         padding: const EdgeInsets.fromLTRB(20, 8, 20, 96),
                         itemCount: _groups.length,
                         separatorBuilder: (_, _) => const SizedBox(height: 12),
@@ -111,7 +118,47 @@ class _ResultsListCoreState extends State<_ResultsListCore> {
                           );
                         },
                       ),
-                    ),
+      ),
+    );
+  }
+}
+
+/// Thông báo giữa màn hình mà VẪN kéo xuống được.
+///
+/// Phải là widget cuộn được thì RefreshIndicator mới nhận cử chỉ kéo -- `Center` trần không
+/// cuộn nên nuốt mất thao tác. Dùng ListView một phần tử với AlwaysScrollableScrollPhysics
+/// (mặc định thì nội dung ngắn hơn màn hình sẽ tắt cuộn) và ép cao bằng màn hình để kéo được
+/// từ bất kỳ đâu, không phải chỉ đúng dòng chữ.
+class _FullHeightMessage extends StatelessWidget {
+  const _FullHeightMessage({required this.message, this.action});
+
+  final String message;
+  final Widget? action;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) => ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        children: [
+          SizedBox(
+            height: constraints.maxHeight,
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    message,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: AppColors.muted, height: 1.5),
+                  ),
+                  ?action,
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

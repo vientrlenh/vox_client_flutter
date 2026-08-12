@@ -96,6 +96,13 @@ class _PracticeSessionScreenState extends State<PracticeSessionScreen>
   /// True khi backend báo PREPARING (đang nhờ AI sinh câu mới cho chủ đề này).
   bool _preparingQuestions = false;
   String? _error;
+
+  /// Lỗi MỞ MICRO -- tách khỏi [_error] có chủ đích.
+  ///
+  /// [_error] làm cả màn hình thành trang lỗi; nhưng mic hỏng thì phiên vẫn sống, WebSocket vẫn
+  /// nối, và người dùng chỉ cần đóng ứng dụng đang giữ mic rồi thử lại. Dựng nguyên trang lỗi ở
+  /// đây là vứt bỏ một phiên còn dùng được.
+  String? _micError;
   PracticeSession? _session;
 
   /// Turns revealed so far — grows as real WS events arrive, no scripted list anymore.
@@ -403,14 +410,36 @@ class _PracticeSessionScreenState extends State<PracticeSessionScreen>
       if (mounted) _toast(l10n.pzSessionMicDenied);
       return;
     }
-    final stream = await _recorder.startStream(
-      const RecordConfig(
-        encoder: AudioEncoder.pcm16bits,
-        sampleRate: 16000,
-        numChannels: 1,
-      ),
-    );
+    // startStream MỞ THIẾT BỊ, khác hẳn hasPermission() ở trên vốn chỉ hỏi "đã cấp quyền chưa".
+    // Được phép không có nghĩa là thiết bị rảnh: Google Meet / Zoom khi đang chia sẻ màn hình
+    // giữ độc quyền micro, và hệ điều hành từ chối ứng dụng thứ hai. Lúc đó hasPermission() vẫn
+    // trả true rồi startStream ném PlatformException.
+    //
+    // Bản cũ không bắt, nên ngoại lệ thoát lên catch của _start() và làm chết luôn hai bước sau
+    // nó -- present_question (AI không được yêu cầu đọc câu hỏi) và _startClock(). Phiên mở,
+    // WebSocket nối, nhưng bấm nói không có gì xảy ra và người dùng chỉ thấy một chuỗi lỗi thô.
+    final Stream<Uint8List> stream;
+    try {
+      stream = await _recorder.startStream(
+        const RecordConfig(
+          encoder: AudioEncoder.pcm16bits,
+          sampleRate: 16000,
+          numChannels: 1,
+        ),
+      );
+    } on Exception catch (error) {
+      if (!mounted) return;
+      // Nuốt ngoại lệ có chủ đích để _start() chạy tiếp: phiên vẫn dựng được, chỉ thiếu mic.
+      // Người dùng đóng Meet rồi bấm "Thử lại" là vào được, không phải tạo phiên mới.
+      setState(() {
+        _micError = l10n.pzSessionMicBusy;
+        _recorderState = _RecorderState.idle;
+      });
+      debugPrint('[practice] khong mo duoc micro: $error');
+      return;
+    }
     _audioStreamSub = stream.listen(_handleAudioChunk);
+    if (mounted) setState(() => _micError = null);
 
     _amplitudeSub?.cancel();
     _amplitudeSub = _recorder
@@ -992,10 +1021,47 @@ class _PracticeSessionScreenState extends State<PracticeSessionScreen>
                 onClose: _handleExitRequest,
               ),
               Expanded(child: _buildBody(l10n)),
+              if (_micError != null) _buildMicErrorBanner(l10n),
               if (!_loading && _error == null) _buildComposer(l10n),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  /// Dải báo mic bận, kèm nút thử lại NGAY TẠI CHỖ.
+  ///
+  /// Đặt ngay trên thanh soạn để người dùng thấy vì sao bấm nói không ăn. Thử lại chỉ gọi lại
+  /// _startAudioStream() -- không dựng lại phiên, không mất câu hỏi đang hỏi.
+  Widget _buildMicErrorBanner(AppLocalizations l10n) {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.chipOrangeBg,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.mic_off, size: 18, color: AppColors.chipOrangeFg),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              _micError!,
+              style: const TextStyle(
+                fontSize: 12.5,
+                height: 1.4,
+                color: AppColors.chipOrangeFg,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () => unawaited(_startAudioStream()),
+            child: Text(l10n.pzSessionMicRetry),
+          ),
+        ],
       ),
     );
   }

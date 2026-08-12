@@ -146,6 +146,24 @@ class PersonalizeRepository {
     );
   }
 
+  /// Tìm theo NGỮ NGHĨA — gọi SONG SONG với [searchTopics], không nối tiếp.
+  ///
+  /// Nuốt mọi lỗi thành danh sách rỗng có chủ đích: đây là nguồn BỔ SUNG. Agents chết thì ô tìm
+  /// kiếm vẫn chạy bằng kết quả tìm theo chuỗi, người dùng không thấy lỗi nào — suy giảm êm thay
+  /// vì hỏng cả màn hình.
+  Future<List<PracticeTopic>> searchTopicsSemantic(String query) async {
+    final keyword = query.trim();
+    if (keyword.isEmpty) {
+      return const [];
+    }
+    try {
+      final rows = await _api.searchTopicsSemantic(keyword);
+      return rows.map(PracticeTopic.fromOffer).toList();
+    } catch (_) {
+      return const [];
+    }
+  }
+
   /// Maps to `generateTopicFromKeyword` — called when the learner accepts
   /// the "create this topic" offer surfaced by `canGenerate`. Returns the
   /// created/matched topic, or null if the AI rejected the keyword
@@ -317,7 +335,9 @@ class PersonalizeRepository {
     final currentIndex = historyRows.indexWhere(
       (entry) => entry.id == sessionId,
     );
-    final currentScore = (detail['overallScore'] as num?)?.toDouble() ?? 0;
+    // KHÔNG `?? 0`: NULL nghĩa là chưa có điểm tổng, không phải được 0 điểm. Xem
+    // SessionSummary.score.
+    final currentScore = (detail['overallScore'] as num?)?.toDouble();
     final previousScore = currentIndex > 0
         ? historyRows[currentIndex - 1].overallScore
         : null;
@@ -349,7 +369,10 @@ class PersonalizeRepository {
       topicTitle: detail['topicName'] as String? ?? '',
       minutes: ((detail['durationSeconds'] as num?)?.toInt() ?? 0) ~/ 60,
       score: currentScore,
-      delta: previousScore == null ? null : currentScore - previousScore,
+      // Thiếu một trong hai đầu thì không có chênh lệch nào để nói.
+      delta: previousScore == null || currentScore == null
+          ? null
+          : currentScore - previousScore,
       // Thang chấm đọc từ CHÍNH phiên, không viết cứng: phiên từ V13 là 0-100, phiên cũ theo
       // thang rubric đã áp lúc đó. Mặc định 0/100 chỉ để đọc được payload cũ chưa có trường này.
       scoreScaleMin: (detail['scoreScaleMin'] as num?)?.toDouble() ?? 0,

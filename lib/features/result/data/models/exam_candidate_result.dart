@@ -110,6 +110,8 @@ class ExamCandidateResult {
     required this.id,
     required this.scoreVisible,
     required this.totalScore,
+    required this.scoringScaleMin,
+    required this.scoringScaleMax,
     required this.status,
     required this.sections,
     required this.items,
@@ -119,6 +121,30 @@ class ExamCandidateResult {
   final String id;
   final bool scoreVisible;
   final double? totalScore;
+
+  /// Thang điểm THẬT của rubric chấm bài này, do backend trả về.
+  ///
+  /// Trước 2026-08-11 màn kết quả viết cứng `/ 10`, nên với rubric thang 0-100 đang chạy thật thì
+  /// bài 79,13 điểm hiện thành "79.1 / 10" và thanh điểm từng phần đầy 100% ở mọi phần. Đừng đoán
+  /// lại thang từ giá trị điểm -- 8.0 có thể là 8/10 mà cũng có thể là 8/100.
+  final double? scoringScaleMin;
+  final double? scoringScaleMax;
+
+  /// Bề rộng thang, dùng làm mẫu số cho thanh tiến trình. Null/không hợp lệ thì trả null để nơi
+  /// dùng tự quyết cách hiển thị, KHÔNG lặng lẽ rơi về 10 như cũ.
+  double? get scoreSpan {
+    final min = scoringScaleMin;
+    final max = scoringScaleMax;
+    if (min == null || max == null || max <= min) return null;
+    return max - min;
+  }
+
+  /// Vị trí của [score] trong thang, 0..1. Dùng cho thanh điểm từng phần.
+  double? ratioOf(double score) {
+    final span = scoreSpan;
+    if (span == null) return null;
+    return ((score - scoringScaleMin!) / span).clamp(0.0, 1.0);
+  }
   final ExamResultStatus status;
   final List<ExamCandidateResultSection> sections;
   final List<ExamCandidateResultItem> items;
@@ -128,6 +154,8 @@ class ExamCandidateResult {
       id: json['id'] as String,
       scoreVisible: json['scoreVisible'] as bool? ?? false,
       totalScore: (json['totalScore'] as num?)?.toDouble(),
+      scoringScaleMin: (json['scoringScaleMin'] as num?)?.toDouble(),
+      scoringScaleMax: (json['scoringScaleMax'] as num?)?.toDouble(),
       status: ExamResultSummary.statusFromJson(json['status'] as String?),
       sections: (json['sections'] as List? ?? const [])
           .map((e) =>

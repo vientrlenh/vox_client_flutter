@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../../app/theme.dart';
@@ -28,15 +30,67 @@ class _PracticeHomeScreenState extends State<PracticeHomeScreen> {
   String? _error;
   PracticeDashboard? _dashboard;
 
+  /// Tự hỏi lại backend trong lúc kho chủ đề còn trống -- cùng cơ chế với
+  /// `PracticeTopicsScreen._syncPolling`, vì cùng một tình huống: `getDashboard` đã kích hoạt
+  /// việc soạn chạy nền ở backend (nó gọi `practiceTopicOffers`, và use case đó gọi
+  /// `TopicOfferBackfillService.backfillAsync` khi lô chào còn thưa) nhưng không có kênh đẩy
+  /// ngược về client, nên hỏi lại theo nhịp là cách duy nhất để màn tự hiện chủ đề.
+  ///
+  /// Nói "quay lại sau 1 phút" mà bắt bấm Tải lại mới thấy là hứa một đằng làm một nẻo.
+  Timer? _pollTimer;
+
+  /// 12 lượt × 5 giây = 60 giây, khớp đúng con số hứa với người dùng. Hết lượt thì dừng hẳn để
+  /// không quay vô hạn khi backend thật sự hỏng (agents chết, hạn mức LLM cạn) -- lúc đó kéo
+  /// xuống để làm mới vẫn còn đó.
+  static const _maxPolls = 12;
+  static const _pollInterval = Duration(seconds: 5);
+  int _pollCount = 0;
+
   @override
   void initState() {
     super.initState();
     _load();
   }
 
-  Future<void> _load() async {
+  @override
+  void dispose() {
+    _pollTimer?.cancel();
+    super.dispose();
+  }
+
+  /// Đúng trạng thái "khảo sát xong nhưng kho chủ đề chưa có gì".
+  ///
+  /// Phải rỗng CẢ HAI: `todayTopic` và `suggestions` đều lấy từ cùng một lượt
+  /// `practiceTopicOffers` (xem `PersonalizeRepository.getDashboard`), nên chỉ cần có một chủ đề
+  /// là `todayTopic` đã có -- lúc đó không còn gì đang soạn để mà chờ.
+  bool get _showsPreparing =>
+      _error == null &&
+      _dashboard != null &&
+      _dashboard!.todayTopic == null &&
+      _dashboard!.suggestions.isEmpty;
+
+  void _syncPolling() {
+    if (_showsPreparing) {
+      _pollTimer ??= Timer.periodic(_pollInterval, (timer) {
+        if (!mounted || _pollCount >= _maxPolls) {
+          timer.cancel();
+          _pollTimer = null;
+          return;
+        }
+        _pollCount++;
+        _load(silent: true);
+      });
+    } else {
+      _pollTimer?.cancel();
+      _pollTimer = null;
+    }
+  }
+
+  /// [silent] giữ nguyên màn đang hiện thay vì thay bằng vòng xoay: không có cờ này thì cứ 5
+  /// giây thông báo "đang soạn" lại bị đè một nhịp, nhìn như app giật chứ không phải đang chờ.
+  Future<void> _load({bool silent = false}) async {
     setState(() {
-      _loading = true;
+      if (!silent) _loading = true;
       _error = null;
     });
     try {
@@ -47,7 +101,10 @@ class _PracticeHomeScreenState extends State<PracticeHomeScreen> {
       if (!mounted) return;
       setState(() => _error = '$e');
     } finally {
-      if (mounted) setState(() => _loading = false);
+      if (mounted) {
+        setState(() => _loading = false);
+        _syncPolling();
+      }
     }
   }
 
@@ -107,29 +164,50 @@ class _PracticeHomeScreenState extends State<PracticeHomeScreen> {
               child: ListView(
                 padding: pagePadding,
                 children: [
-                  if (data.todayTopic != null)
-                    _TodaySessionCard(
-                      topic: data.todayTopic!,
-                      onStart: () => _openSession(data.todayTopic!),
-                      onChangeTopic: _openTopics,
-                    )
-                  else
-                    _NoTopicYetCard(onBrowse: _openTopics),
-                  const SizedBox(height: 12),
-                  _StatRow(dashboard: data),
-                  const SizedBox(height: 22),
-                  _SectionHeader(
-                    label: l10n.pzHomeSuggestions,
-                    action: l10n.pzSeeAll,
-                    onAction: _openTopics,
-                  ),
-                  const SizedBox(height: 10),
-                  for (final topic in data.suggestions) ...[
-                    _SuggestionCard(
-                      topic: topic,
-                      onTap: () => _openSession(topic),
+                  // Kho chưa có chủ đề nào -- nói thẳng là hệ thống đang soạn, KHÔNG dùng
+                  // _NoTopicYetCard.
+                  //
+                  // Hai tình huống nhìn giống nhau mà khác hẳn nhau: _NoTopicYetCard nghĩa là
+                  // "có chủ đề đấy, hôm nay bạn chưa chọn cái nào" và mời bấm sang màn chọn --
+                  // sang tới nơi thì cũng trống trơn. Ở đây là "chưa có chủ đề nào tồn tại",
+                  // việc phải làm là ĐỢI chứ không phải bấm đi đâu cả.
+                  //
+                  // Cũng bỏ luôn mục "Gợi ý cho bạn" trong lúc này: một tiêu đề mục với khoảng
+                  // trống bên dưới trông như app lỗi.
+                  if (_showsPreparing) ...[
+                    _PreparingTopicsCard(
+                      title: l10n.pzHomePreparingTitle,
+                      body: l10n.pzHomePreparingBody,
+                      onRetry: _load,
+                      retryLabel: l10n.pzTopicsRefresh,
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 12),
+                    _StatRow(dashboard: data),
+                  ] else ...[
+                    if (data.todayTopic != null)
+                      _TodaySessionCard(
+                        topic: data.todayTopic!,
+                        onStart: () => _openSession(data.todayTopic!),
+                        onChangeTopic: _openTopics,
+                      )
+                    else
+                      _NoTopicYetCard(onBrowse: _openTopics),
+                    const SizedBox(height: 12),
+                    _StatRow(dashboard: data),
+                    const SizedBox(height: 22),
+                    _SectionHeader(
+                      label: l10n.pzHomeSuggestions,
+                      action: l10n.pzSeeAll,
+                      onAction: _openTopics,
+                    ),
+                    const SizedBox(height: 10),
+                    for (final topic in data.suggestions) ...[
+                      _SuggestionCard(
+                        topic: topic,
+                        onTap: () => _openSession(topic),
+                      ),
+                      const SizedBox(height: 8),
+                    ],
                   ],
                 ],
               ),
@@ -208,6 +286,94 @@ class _Header extends StatelessWidget {
                   ),
                 ),
               ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Kho chủ đề còn TRỐNG HẲN -- vừa làm xong khảo sát sở thích, backend đang soạn lô đầu tiên.
+///
+/// Khác `_NoTopicYetCard` ở chỗ quan trọng nhất là VIỆC PHẢI LÀM: cái kia mời bấm sang màn chọn
+/// chủ đề, còn ở đây sang tới nơi cũng trống, nên chỉ mời đợi. Nút "Tải lại" là lối thoát cho
+/// trường hợp vòng hỏi tự động đã hết lượt, không phải thao tác bắt buộc.
+class _PreparingTopicsCard extends StatelessWidget {
+  const _PreparingTopicsCard({
+    required this.title,
+    required this.body,
+    required this.onRetry,
+    required this.retryLabel,
+  });
+
+  final String title;
+  final String body;
+  final VoidCallback onRetry;
+  final String retryLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [AppColors.chipBlueBg, Color(0xFFF5F3FF)],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.indigo, width: 1.5),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              // Vòng xoay CHẠY THẬT chứ không phải icon tĩnh: nó là thứ duy nhất trên màn nói
+              // được "hệ thống đang làm việc", chứ không phải "đã xong và không có gì".
+              const SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.2,
+                  color: AppColors.indigo,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 15.5,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.ink,
+                    height: 1.3,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            body,
+            style: const TextStyle(
+              fontSize: 13,
+              height: 1.5,
+              color: Color(0xFF4C4A75),
+            ),
+          ),
+          const SizedBox(height: 14),
+          OutlinedButton.icon(
+            onPressed: onRetry,
+            icon: const Icon(Icons.refresh, size: 18),
+            label: Text(retryLabel),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.indigo,
+              side: const BorderSide(color: AppColors.indigo),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(99),
+              ),
             ),
           ),
         ],

@@ -142,6 +142,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
                 for (int i = 0; i < result.sections.length; i++) ...[
                   _SectionRow(
                     result.sections[i],
+                    scoreRatio: result.ratioOf(result.sections[i].score),
                     // Một mục có thể gồm nhiều câu -- gom hết responseId của mục đó lại.
                     answerIds: [
                       for (final item in result.items)
@@ -291,8 +292,11 @@ class _ScoreHero extends StatelessWidget {
                     height: 1,
                   ),
                 ),
+              
                 Text(
-                  ' / 10',
+                  result.scoringScaleMax == null
+                      ? ''
+                      : ' / ${_trimZero(result.scoringScaleMax!)}',
                   style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.w600,
@@ -332,15 +336,32 @@ class _ScoreHero extends StatelessWidget {
   }
 }
 
+/// "100.0" -> "100", "9.5" -> "9.5". Mẫu số của thang gần như luôn là số tròn, kéo theo ".0"
+/// nhìn như điểm lẻ.
+String _trimZero(double value) =>
+    value == value.roundToDouble() ? value.toStringAsFixed(0) : value.toStringAsFixed(1);
+
 /// Một mục điểm, xổ ra được để xem AI chấm mục đó thế nào.
 ///
 /// Bản chấm tải LƯỜI -- chỉ gọi khi học sinh mở mục ra, và chỉ gọi một lần. Một bài có nhiều
 /// câu, mỗi câu là một lượt truy vấn kèm join tới bảng điểm tiêu chí; nạp sẵn tất cả chỉ để
 /// có thể người ta không mở cái nào là trả giá cho việc chưa chắc xảy ra.
 class _SectionRow extends StatefulWidget {
-  const _SectionRow(this.section, {required this.answerIds, required this.repository});
+  const _SectionRow(
+    this.section, {
+    required this.answerIds,
+    required this.repository,
+    required this.scoreRatio,
+  });
 
   final ExamCandidateResultSection section;
+
+  /// Vị trí của điểm mục này trong thang rubric, 0..1 -- do nơi gọi tính từ
+  /// `ExamCandidateResult.ratioOf`. Null khi backend chưa trả thang.
+  ///
+  /// Truyền SỐ ĐÃ TÍNH chứ không truyền cả `result` xuống: widget này chỉ cần đúng một con số,
+  /// và bản cũ tự chia `score / 10` chính là hệ quả của việc nó không có thang trong tay.
+  final double? scoreRatio;
 
   /// `responseId` của các câu thuộc mục này -- khoá để hỏi `examItemResponseEvaluation`.
   final List<String> answerIds;
@@ -479,20 +500,27 @@ class _SectionRowState extends State<_SectionRow> {
               ),
             ),
           ),
-          Expanded(
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(99),
-              child: Container(
-                height: 8,
-                color: const Color(0xFFF1F5F9),
-                child: FractionallySizedBox(
-                  alignment: Alignment.centerLeft,
-                  widthFactor: (section.score / 10).clamp(0.0, 1.0),
-                  child: Container(color: AppColors.indigo),
+          // Không biết thang thì KHÔNG vẽ thanh. Thanh tiến trình là một khẳng định về tỉ lệ;
+          // thiếu mẫu số mà vẫn vẽ thì hoặc phải bịa mẫu số (bản cũ chia cứng cho 10, nên mọi
+          // mục của rubric thang 0-100 đều đầy kín), hoặc vẽ thanh rỗng -- trông như 0 điểm.
+          // Con số bên phải vẫn hiện đủ, đó mới là thông tin thật.
+          if (widget.scoreRatio != null)
+            Expanded(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(99),
+                child: Container(
+                  height: 8,
+                  color: const Color(0xFFF1F5F9),
+                  child: FractionallySizedBox(
+                    alignment: Alignment.centerLeft,
+                    widthFactor: widget.scoreRatio!,
+                    child: Container(color: AppColors.indigo),
+                  ),
                 ),
               ),
-            ),
-          ),
+            )
+          else
+            const Spacer(),
           SizedBox(
             width: 42,
             child: Text(

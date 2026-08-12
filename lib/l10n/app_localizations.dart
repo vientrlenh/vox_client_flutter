@@ -848,16 +848,28 @@ abstract class AppLocalizations {
   /// **'The first time takes a little longer while we write new ones.'**
   String get pzPreparingHint;
 
+  /// No description provided for @pzHomePreparingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Writing topics just for you'**
+  String get pzHomePreparingTitle;
+
+  /// No description provided for @pzHomePreparingBody.
+  ///
+  /// In en, this message translates to:
+  /// **'We are using your interest quiz to write your first topics. This takes about a minute — come back shortly and they will show up here on their own.'**
+  String get pzHomePreparingBody;
+
   /// No description provided for @pzTopicsPreparing.
   ///
   /// In en, this message translates to:
-  /// **'We are putting your profile together'**
+  /// **'AI is putting your interests together'**
   String get pzTopicsPreparing;
 
   /// No description provided for @pzTopicsPreparingBody.
   ///
   /// In en, this message translates to:
-  /// **'Your topics are being written from the survey you just finished. Come back in a minute or two.'**
+  /// **'Please wait a moment. Your topics will appear here as soon as they are ready.'**
   String get pzTopicsPreparingBody;
 
   /// No description provided for @pzTopicsRefresh.
@@ -931,6 +943,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Other suggestions'**
   String get pzTopicsOtherSuggestions;
+
+  /// No description provided for @pzTopicsSemanticSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Related topics'**
+  String get pzTopicsSemanticSection;
+
+  /// No description provided for @pzTopicsSemanticLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Looking for related topics…'**
+  String get pzTopicsSemanticLoading;
 
   /// No description provided for @pzTopicsEmpty.
   ///
@@ -1009,6 +1033,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Finish session'**
   String get pzSessionFinish;
+
+  /// No description provided for @pzSessionMicBusy.
+  ///
+  /// In en, this message translates to:
+  /// **'The microphone is in use by another app (Google Meet, Zoom…). Close it, then tap Retry.'**
+  String get pzSessionMicBusy;
+
+  /// No description provided for @pzSessionMicRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get pzSessionMicRetry;
 
   /// No description provided for @pzSessionMicDenied.
   ///

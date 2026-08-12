@@ -38,6 +38,8 @@ class ResultApi {
           id
           scoreVisible
           totalScore
+          scoringScaleMin
+          scoringScaleMax
           status
           sections { sectionId title score }
           items { paperItemId responseId sectionId itemScore }

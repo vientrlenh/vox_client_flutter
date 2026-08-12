@@ -102,6 +102,26 @@ class PersonalizeApi {
     );
   }
 
+  /// Maps to `searchPracticeTopicsSemantic(keyword)` — tìm theo NGỮ NGHĨA.
+  ///
+  /// Query RIÊNG với [searchTopics] để gọi song song được: đường này phải nhúng từ khoá bằng
+  /// OpenAI rồi hỏi Chroma nên chậm hơn hàng chục lần. Trả rỗng khi dịch vụ AI không sẵn sàng --
+  /// backend đã nuốt lỗi, nơi gọi chỉ cần coi rỗng là "chưa có gì thêm".
+  Future<List<Map<String, dynamic>>> searchTopicsSemantic(String keyword) async {
+    final data = await _client.query(
+      '''
+      query SearchPracticeTopicsSemantic(\$keyword: String!) {
+        searchPracticeTopicsSemantic(keyword: \$keyword) {
+          $_offerFields
+        }
+      }
+    ''',
+      variables: {'keyword': keyword},
+    );
+    return (data['searchPracticeTopicsSemantic'] as List)
+        .cast<Map<String, dynamic>>();
+  }
+
   /// Maps to `generateTopicFromKeyword(keyword)` — full `TopicFromKeywordResult`
   /// shape (`topic` + `outcome`), used when `searchTopics` comes back with
   /// `canGenerate: true` and the learner asks to create the topic.

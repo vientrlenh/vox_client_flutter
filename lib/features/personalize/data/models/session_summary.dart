@@ -3,7 +3,14 @@ class SessionSummary {
   final String sessionId;
   final String topicTitle;
   final int minutes;
-  final double score;
+
+  /// NULL = chưa có điểm tổng, KHÁC HẲN với được 0 điểm.
+  ///
+  /// Backend để `practice_session.overall_score` là NULL khi chưa câu nào chấm xong, hoặc khi
+  /// bài bị đánh dấu không hợp lệ. Bản cũ quy đổi NULL thành 0 ngay ở repository nên màn tổng
+  /// kết hiện "0.0 / 100" trong khi từng tiêu chí vẫn có điểm thật (79.9, 88.7...) -- nhìn vào
+  /// thì mâu thuẫn, và học sinh chỉ có thể kết luận là hệ thống hỏng.
+  final double? score;
 
   /// Difference against the previous session, e.g. `+0.4`.
   final double? delta;

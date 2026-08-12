@@ -45,4 +45,8 @@ app.*.map.json
 /android/app/release
 
 .env
+# Moi bien the .env (.env.production, .env.staging...) -- chung mang endpoint va khoa
+# theo tung moi truong. Dong `.env` o tren chi khop DUNG mot ten, nen .env.production tung
+# lot vao commit dfc52c0.
+.env.*
 android/app/google-services.json

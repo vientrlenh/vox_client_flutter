@@ -287,7 +287,10 @@ class _ScoreHero extends StatelessWidget {
               textBaseline: TextBaseline.alphabetic,
               children: [
                 Text(
-                  summary.score.toStringAsFixed(1),
+                  // Chưa có điểm tổng thì hiện gạch, KHÔNG hiện 0.0 -- "chưa chấm" và "được 0
+                  // điểm" là hai chuyện khác hẳn, mà từng tiêu chí bên dưới vẫn có điểm thật
+                  // nên hiện 0 ở đây là tự mâu thuẫn.
+                  summary.score?.toStringAsFixed(1) ?? '—',
                   style: const TextStyle(
                     fontSize: 58,
                     fontWeight: FontWeight.w800,

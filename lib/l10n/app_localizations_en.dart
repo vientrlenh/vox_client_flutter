@@ -406,11 +406,18 @@ class AppLocalizationsEn extends AppLocalizations {
       'The first time takes a little longer while we write new ones.';
 
   @override
-  String get pzTopicsPreparing => 'We are putting your profile together';
+  String get pzHomePreparingTitle => 'Writing topics just for you';
+
+  @override
+  String get pzHomePreparingBody =>
+      'We are using your interest quiz to write your first topics. This takes about a minute — come back shortly and they will show up here on their own.';
+
+  @override
+  String get pzTopicsPreparing => 'AI is putting your interests together';
 
   @override
   String get pzTopicsPreparingBody =>
-      'Your topics are being written from the survey you just finished. Come back in a minute or two.';
+      'Please wait a moment. Your topics will appear here as soon as they are ready.';
 
   @override
   String get pzTopicsRefresh => 'Reload';
@@ -449,6 +456,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get pzTopicsOtherSuggestions => 'Other suggestions';
+
+  @override
+  String get pzTopicsSemanticSection => 'Related topics';
+
+  @override
+  String get pzTopicsSemanticLoading => 'Looking for related topics…';
 
   @override
   String get pzTopicsEmpty => 'No topics in this list yet.';
@@ -497,6 +510,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get pzSessionFinish => 'Finish session';
+
+  @override
+  String get pzSessionMicBusy =>
+      'The microphone is in use by another app (Google Meet, Zoom…). Close it, then tap Retry.';
+
+  @override
+  String get pzSessionMicRetry => 'Retry';
 
   @override
   String get pzSessionMicDenied =>

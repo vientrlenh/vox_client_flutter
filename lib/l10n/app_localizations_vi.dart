@@ -405,11 +405,18 @@ class AppLocalizationsVi extends AppLocalizations {
   String get pzPreparingHint => 'Lần đầu có thể lâu hơn chút vì đang soạn mới.';
 
   @override
-  String get pzTopicsPreparing => 'Hệ thống đang tổng hợp thông tin của bạn';
+  String get pzHomePreparingTitle => 'Đang soạn chủ đề riêng cho bạn';
+
+  @override
+  String get pzHomePreparingBody =>
+      'Hệ thống đang dựa trên bài khảo sát sở thích để soạn chủ đề. Việc này mất khoảng 1 phút — bạn quay lại sau nhé, màn hình sẽ tự hiện khi xong.';
+
+  @override
+  String get pzTopicsPreparing => 'AI đang tổng hợp sở thích cho bạn';
 
   @override
   String get pzTopicsPreparingBody =>
-      'Chủ đề riêng đang được soạn dựa trên bài khảo sát vừa làm. Quay lại sau 1-2 phút nhé.';
+      'Vui lòng đợi trong giây lát. Màn hình sẽ tự hiện chủ đề khi soạn xong.';
 
   @override
   String get pzTopicsRefresh => 'Tải lại';
@@ -448,6 +455,12 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get pzTopicsOtherSuggestions => 'Gợi ý khác';
+
+  @override
+  String get pzTopicsSemanticSection => 'Chủ đề gần nghĩa';
+
+  @override
+  String get pzTopicsSemanticLoading => 'Đang tìm thêm chủ đề gần nghĩa…';
 
   @override
   String get pzTopicsEmpty => 'Chưa có chủ đề nào trong danh sách này.';
@@ -496,6 +509,13 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get pzSessionFinish => 'Kết thúc buổi';
+
+  @override
+  String get pzSessionMicBusy =>
+      'Micro đang được ứng dụng khác sử dụng (Google Meet, Zoom…). Hãy đóng ứng dụng đó rồi bấm Thử lại.';
+
+  @override
+  String get pzSessionMicRetry => 'Thử lại';
 
   @override
   String get pzSessionMicDenied =>

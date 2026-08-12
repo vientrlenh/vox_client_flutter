@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../../app/theme.dart';
@@ -38,12 +40,33 @@ class _PracticeTopicsScreenState extends State<PracticeTopicsScreen> {
   /// Kho chủ đề không có gì khớp từ khoá, nhưng từ khoá hợp lệ để nhờ AI soạn mới.
   bool _canGenerate = false;
 
+  /// Kết quả tìm theo NGỮ NGHĨA -- về SAU nhóm khớp tên và được nối thêm vào cuối.
+  List<PracticeTopic> _semanticTopics = const [];
+
+  /// Đang chờ nguồn ngữ nghĩa. Tách khỏi [_loading] vì hai nguồn chạy song song: nguồn nhanh về
+  /// là vẽ ngay, không chờ nguồn chậm.
+  bool _semanticLoading = false;
+
   /// Lô chào thứ mấy. Từ lô 2 trở đi backend nâng tỉ lệ thăm dò ε 0,10 → 0,30, tức chịu
   /// tráo vào nhiều chủ đề ngoài top hơn — đúng lúc học sinh vừa nói "cái này chán".
   int _round = 1;
 
   /// Chủ đề đã bị từ chối ở các lô trước, không chào lại nữa trong phiên duyệt này.
   final _rejectedTopicIds = <String>{};
+
+  /// Tự hỏi lại backend trong lúc kho chủ đề còn trống.
+  ///
+  /// Màn chờ nói "vui lòng đợi trong giây lát", nên nó phải TỰ hiện chủ đề khi soạn xong -- bắt
+  /// người dùng bấm Tải lại là hứa một đằng làm một nẻo. Việc soạn chạy nền ở backend
+  /// (TopicOfferBackfillService gọi LLM rồi index sang vector store, hàng chục giây) và không có
+  /// kênh đẩy ngược về client, nên hỏi lại theo nhịp là cách duy nhất.
+  Timer? _pollTimer;
+
+  /// Dừng hỏi sau chừng này lượt để không quay vô hạn khi backend thật sự hỏng (agents chết,
+  /// hạn mức LLM cạn...). Hết lượt thì nút Tải lại vẫn còn đó.
+  static const _maxPolls = 12;
+  static const _pollInterval = Duration(seconds: 5);
+  int _pollCount = 0;
 
   // GỠ 2026-08-06: thẻ "gợi ý chờ duyệt" (_suggestions / _respondToSuggestion / _loadSuggestions).
   // Nguồn duy nhất tạo ra gợi ý là đường suy chủ đề TỪ LỜI HỌC SINH NÓI, đã bỏ ở backend, nên
@@ -58,13 +81,48 @@ class _PracticeTopicsScreenState extends State<PracticeTopicsScreen> {
 
   @override
   void dispose() {
+    _pollTimer?.cancel();
     _searchController.dispose();
     super.dispose();
   }
 
-  Future<void> _load() async {
+  /// Bật/tắt vòng hỏi lại tuỳ theo màn hình có đang ở trạng thái chờ soạn hay không.
+  ///
+  /// Gọi ở cuối mỗi lượt `_load` nên nó tự tắt ngay khi chủ đề về, khi chuyển sang tìm kiếm,
+  /// khi đổi sang tab Đã lưu, hoặc khi có lỗi -- không cần nhớ tắt ở từng nhánh.
+  void _syncPolling() {
+    if (_showsPreparing) {
+      _pollTimer ??= Timer.periodic(_pollInterval, (timer) {
+        if (!mounted || _pollCount >= _maxPolls) {
+          timer.cancel();
+          _pollTimer = null;
+          return;
+        }
+        // silent: giữ nguyên thông báo "AI đang tổng hợp" trên màn. Không có cờ này thì cứ 5
+        // giây vòng xoay lại đè lên nó một nhịp, nhìn như app giật chứ không phải đang chờ.
+        _pollCount++;
+        _load(silent: true);
+      });
+    } else {
+      _pollTimer?.cancel();
+      _pollTimer = null;
+    }
+  }
+
+  /// Đúng trạng thái "kho chưa có gì, AI đang soạn" -- KHÔNG phải mọi danh sách rỗng.
+  ///
+  /// Tab Đã lưu rỗng nghĩa là học sinh chưa lưu chủ đề nào, và tìm kiếm không ra nghĩa là từ
+  /// khoá không khớp; cả hai đều không có ai đang soạn gì cả. Trước đây nhánh rỗng không phân
+  /// biệt ba trường hợp này, nên mở tab Đã lưu lần đầu cũng bị báo "AI đang tổng hợp sở thích".
+  bool get _showsPreparing =>
+      _topics.isEmpty &&
+      _error == null &&
+      _filter != TopicFilter.saved &&
+      _searchController.text.trim().isEmpty;
+
+  Future<void> _load({bool silent = false}) async {
     setState(() {
-      _loading = true;
+      if (!silent) _loading = true;
       _error = null;
     });
     try {
@@ -79,8 +137,26 @@ class _PracticeTopicsScreenState extends State<PracticeTopicsScreen> {
         setState(() {
           _topics = topics;
           _canGenerate = false;
+          _semanticTopics = const [];
+          _semanticLoading = false;
         });
       } else {
+        // HAI nguồn, bắn CÙNG LÚC chứ không nối tiếp: tìm theo chuỗi là một câu LIKE vài chục
+        // mili giây, tìm theo ngữ nghĩa phải nhúng từ khoá bằng OpenAI rồi hỏi Chroma. Chờ cả
+        // hai mới vẽ là bắt người dùng đợi nguồn chậm nhất một cách vô ích.
+        setState(() {
+          _semanticLoading = true;
+          _semanticTopics = const [];
+        });
+        unawaited(
+          _repository.searchTopicsSemantic(query).then((rows) {
+            if (!mounted) return;
+            setState(() {
+              _semanticTopics = rows;
+              _semanticLoading = false;
+            });
+          }),
+        );
         final result = await _repository.searchTopics(query);
         if (!mounted) return;
         setState(() {
@@ -94,7 +170,10 @@ class _PracticeTopicsScreenState extends State<PracticeTopicsScreen> {
       if (!mounted) return;
       setState(() => _error = '$e');
     } finally {
-      if (mounted) setState(() => _loading = false);
+      if (mounted) {
+        setState(() => _loading = false);
+        _syncPolling();
+      }
     }
   }
 
@@ -387,10 +466,29 @@ class _PracticeTopicsScreenState extends State<PracticeTopicsScreen> {
       return PersonalizeErrorView(detail: _error, onRetry: _load);
     }
 
+    // Rỗng vì lý do TẦM THƯỜNG: chưa lưu chủ đề nào, hoặc từ khoá không khớp gì. Không có ai
+    // đang soạn gì cả nên đừng hứa hẹn -- và cũng không hỏi lại theo nhịp làm gì.
+    if (_topics.isEmpty && !_showsPreparing) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(28),
+          child: Text(
+            l10n.pzTopicsEmpty,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 13, height: 1.45, color: AppColors.muted),
+          ),
+        ),
+      );
+    }
+
     if (_topics.isEmpty) {
       // Rỗng ngay sau khi làm xong khảo sát KHÔNG phải lỗi -- backend đã nhận và đang soạn chủ
       // đề chạy nền (xem TopicOfferBackfillService). Trước đây chỗ này chờ LLM ngay trong
       // request nên lượt đầu luôn timeout; giờ vào thẳng màn này rồi tải lại sau.
+      //
+      // Màn này TỰ hỏi lại backend mỗi 5 giây (xem _syncPolling) nên chủ đề hiện ra không cần
+      // thao tác nào -- đúng như câu "vui lòng đợi trong giây lát" đang hứa. Nút Tải lại giữ
+      // lại cho trường hợp hết lượt hỏi tự động.
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(28),
@@ -457,10 +555,59 @@ class _PracticeTopicsScreenState extends State<PracticeTopicsScreen> {
             const SizedBox(height: 8),
           ],
         ],
+        // Nhóm GẦN NGHĨA -- về sau nhóm khớp tên nên nối vào cuối, không chen lên trên.
+        //
+        // Loại trùng theo id: một chủ đề vừa khớp tên vừa gần nghĩa thì chỉ hiện MỘT lần, ở
+        // nhóm trên. Tách nhóm để người dùng hiểu vì sao dòng dưới xuất hiện dù tên không chứa
+        // từ khoá -- gộp chung sẽ trông như tìm kiếm trả về kết quả sai.
+        ..._buildSemanticSection(l10n),
         const SizedBox(height: 12),
         const _FooterTip(),
       ],
     );
+  }
+
+  List<Widget> _buildSemanticSection(AppLocalizations l10n) {
+    final shownIds = {for (final topic in _topics) topic.id};
+    final extra = [
+      for (final topic in _semanticTopics)
+        if (!shownIds.contains(topic.id)) topic,
+    ];
+    if (extra.isEmpty) {
+      // Đang chờ nguồn ngữ nghĩa thì báo nhẹ, đừng để người dùng tưởng đã hết kết quả.
+      if (!_semanticLoading) return const [];
+      return [
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            const SizedBox(
+              height: 13,
+              width: 13,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              l10n.pzTopicsSemanticLoading,
+              style: const TextStyle(fontSize: 12, color: AppColors.muted),
+            ),
+          ],
+        ),
+      ];
+    }
+    return [
+      const SizedBox(height: 16),
+      SectionLabel(l10n.pzTopicsSemanticSection),
+      const SizedBox(height: 10),
+      for (final topic in extra) ...[
+        _TopicRow(
+          topic: topic,
+          onTap: () => _pick(topic),
+          onToggleSaved: () => _toggleSaved(topic),
+          onDismiss: () => _dismissTopic(topic),
+        ),
+        const SizedBox(height: 8),
+      ],
+    ];
   }
 }
 

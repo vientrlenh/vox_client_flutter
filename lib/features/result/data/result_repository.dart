@@ -7,7 +7,18 @@ class ResultRepository {
 
   final ResultApi _resultApi;
 
-  static Future<List<ExamResultSummary>>? _cachedResults;
+  /// Cache theo VÒNG ĐỜI REPOSITORY, không phải `static`.
+  ///
+  /// Bản cũ khai `static`, nên nó sống theo cả tiến trình app và chỉ mất khi tiến trình chết.
+  /// Nó còn ghim chính cái `Future` chứ không phải kết quả -- nghĩa là ảnh chụp ĐẦU TIÊN được
+  /// giữ vĩnh viễn. Đúng lúc tệ nhất: học sinh mở màn kết quả trước khi giáo viên công bố điểm
+  /// (trường hợp phổ biến nhất) thì danh sách rỗng bị ghim, và mọi lần mở lại sau đó trả thẳng
+  /// nó ra mà không chạm mạng. Đo thực tế: app hỏi backend đúng một lần lúc 21:53, điểm công bố
+  /// lúc 22:15, và suốt hơn một giờ sau không hề có thêm request nào.
+  ///
+  /// Giữ cache ở mức instance thì vẫn tránh gọi lại khi đổi tab trong cùng màn hình, mà rời màn
+  /// rồi vào lại là có repository mới -> dữ liệu mới.
+  Future<List<ExamResultSummary>>? _cachedResults;
 
   Future<List<ExamResultSummary>> getMyExamResults({bool refresh = false}) {
     if (refresh || _cachedResults == null) {
