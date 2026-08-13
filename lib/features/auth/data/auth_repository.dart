@@ -2,6 +2,7 @@ import 'package:vox_client_flutter/features/auth/data/models/login_response.dart
 
 import '../../../core/device/device_info.dart';
 import '../../../core/messaging/push_messaging_service.dart';
+import '../../../core/network/token_refresher.dart';
 import '../../../core/storage/secure_storage.dart';
 import 'auth_api.dart';
 
@@ -56,7 +57,9 @@ class AuthRepository {
     } catch (_) {
       // local logout must succeed regardless
     }
-    await _secureStorage.clearAccessToken();
-    await _secureStorage.clearRefreshToken();
+    // Xoá cả cookie: refresh token nằm ở đó chứ không phải trong secure storage. Bỏ bước này
+    // thì cookie phiên cũ còn nguyên, và người đăng nhập sau trên cùng máy có thể bị làm mới
+    // nhầm sang phiên của người trước.
+    await TokenRefresher.clearSession();
   }
 }

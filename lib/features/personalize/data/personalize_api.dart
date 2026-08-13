@@ -246,6 +246,7 @@ class PersonalizeApi {
     gradedSeconds
     startedAt
     endedAt
+    pendingEvaluations
   ''';
 
   /// Maps to `startPracticeSession(paperId)` — mints the real session id, which is also the
@@ -503,6 +504,7 @@ class PersonalizeApi {
           scoreScaleMax
           completed
           pendingEvaluationCount
+          gradingGaveUpCount
           difficultyRank
           criterionScores { criterionCode score }
           turns {

@@ -7,6 +7,7 @@ import 'package:record/record.dart';
 
 import '../../../app/theme.dart';
 import '../../../app/widgets.dart';
+import '../../../core/platform/mic_status.dart';
 import '../../../l10n/app_localizations.dart';
 import '../data/models/practice_session.dart';
 import '../data/models/practice_topic.dart';
@@ -103,6 +104,23 @@ class _PracticeSessionScreenState extends State<PracticeSessionScreen>
   /// nối, và người dùng chỉ cần đóng ứng dụng đang giữ mic rồi thử lại. Dựng nguyên trang lỗi ở
   /// đây là vứt bỏ một phiên còn dùng được.
   String? _micError;
+
+  /// Dò micro bị Android BỊT TIẾNG -- xem [_armSilencedMicWatchdog].
+  Timer? _silencedMicWatchdog;
+
+  /// Đã leo thang sang nguồn thu của ứng dụng gọi điện chưa -- xem [_recordConfig].
+  ///
+  /// Một chiều: đã giành thì giữ nguyên tới hết phiên. Tự hạ xuống khi thấy hết bị bịt sẽ làm
+  /// chất lượng âm thanh đổi giữa chừng, mà bài chấm thì trải dài cả phiên.
+  bool _preferCallAudio = false;
+
+  /// Người dùng đã tự đóng băng cảnh báo micro bị bịt.
+  ///
+  /// Tôn trọng lựa chọn đó -- có người CHỦ Ý vừa họp vừa mở bài để xem đề. Nhưng đóng không có
+  /// nghĩa là đồng ý im mãi: hễ họ bấm nói (xem [_startTalking]) thì cờ này bị gỡ và cảnh báo
+  /// hiện lại, vì đó đúng là lúc việc micro bị bịt gây hậu quả.
+  bool _micWarningDismissed = false;
+
   PracticeSession? _session;
 
   /// Turns revealed so far — grows as real WS events arrive, no scripted list anymore.
@@ -203,6 +221,7 @@ class _PracticeSessionScreenState extends State<PracticeSessionScreen>
 
   @override
   void dispose() {
+    _silencedMicWatchdog?.cancel();
     _amplitudeSub?.cancel();
     _audioStreamSub?.cancel();
     _eventsSub?.cancel();
@@ -420,13 +439,13 @@ class _PracticeSessionScreenState extends State<PracticeSessionScreen>
     // WebSocket nối, nhưng bấm nói không có gì xảy ra và người dùng chỉ thấy một chuỗi lỗi thô.
     final Stream<Uint8List> stream;
     try {
-      stream = await _recorder.startStream(
-        const RecordConfig(
-          encoder: AudioEncoder.pcm16bits,
-          sampleRate: 16000,
-          numChannels: 1,
-        ),
-      );
+      // Dừng luồng cũ trước: đổi cấu hình (xem [_recordConfig]) chỉ có tác dụng khi thiết bị
+      // được mở lại từ đầu. Bọc try vì stop() lúc chưa thu là vô hại nhưng không phải bản nào
+      // cũng im lặng bỏ qua.
+      try {
+        await _recorder.stop();
+      } on Exception catch (_) {}
+      stream = await _recorder.startStream(_recordConfig);
     } on Exception catch (error) {
       if (!mounted) return;
       // Nuốt ngoại lệ có chủ đích để _start() chạy tiếp: phiên vẫn dựng được, chỉ thiếu mic.
@@ -456,7 +475,103 @@ class _PracticeSessionScreenState extends State<PracticeSessionScreen>
     // _onAiSpeechDone), not immediately -- the student can't answer a question they
     // haven't heard yet.
     setState(() => _recorderState = _RecorderState.recording);
+    _armSilencedMicWatchdog();
   }
+
+  /// Bắt ca micro MỞ ĐƯỢC nhưng Android trả về toàn im lặng.
+  ///
+  /// Hỏi THẲNG hệ điều hành qua `AudioRecordingConfiguration.isClientSilenced` (API 29+, xem
+  /// MainActivity.kt) -- đúng cờ `silenced` mà `dumpsys audio` hiển thị. Không suy từ biên độ:
+  /// suy thì phải chọn ngưỡng dB, mà ngưỡng nào cũng có máy báo nhầm, và im lặng thật của người
+  /// đang nghĩ trông y hệt luồng bị bịt.
+  ///
+  /// Kiểm ĐỊNH KỲ chứ không một lần: người dùng có thể mở Google Meet GIỮA phiên luyện, lúc đó
+  /// micro đang thu bình thường bỗng bị bịt. Ngược lại, thoát Meet ra thì cờ tự tắt và băng cảnh
+  /// báo phải biến mất mà không cần bấm gì.
+  void _armSilencedMicWatchdog() {
+    _silencedMicWatchdog?.cancel();
+    // Kiểm NGAY một lần, đừng bắt người dùng chờ hết nhịp đầu: học sinh vừa vào bài mà micro đã
+    // bị bịt sẵn thì phải biết trước khi bấm nói lần đầu, không phải sau khi đã nói hụt một câu.
+    unawaited(_probeSilencedMic());
+    _silencedMicWatchdog =
+        Timer.periodic(_silencedMicProbe, (_) => unawaited(_probeSilencedMic()));
+  }
+
+  /// Một lượt hỏi hệ điều hành, và dựng/gỡ băng cảnh báo theo kết quả.
+  ///
+  /// @return true nếu micro ĐANG BỊ BỊT (đã chắc chắn). `false` bao gồm cả trường hợp không kết
+  /// luận được -- nơi gọi coi như bình thường và cứ để người dùng nói.
+  Future<bool> _probeSilencedMic({bool force = false}) async {
+    final silenced = await MicStatus.isSilenced(sampleRate: _kSampleRate);
+    if (!mounted || silenced == null) return false;
+    // Người dùng đã tự đóng băng cảnh báo -> im lặng cho tới lần bấm nói kế tiếp (force). Không
+    // có chỗ này thì watchdog dựng lại băng sau 3 giây và cái nút đóng thành ra vô nghĩa.
+    if (silenced && _micWarningDismissed && !force) return true;
+    if (force) _micWarningDismissed = false;
+    final l10n = AppLocalizations.of(context)!;
+    // Đã giành mà vẫn bị bịt thì lời khuyên "thoát app kia" không còn là bước tiếp theo hữu ích
+    // nữa -- phải nói thẳng rằng cách duy nhất còn lại nằm ở phía Google Meet.
+    final message = _preferCallAudio
+        ? l10n.pzSessionMicClaimFailed
+        : l10n.pzSessionMicSilenced;
+    // Chỉ đụng vào _micError khi CHÍNH nó là thứ ta đặt, để không xoá mất thông báo của một lỗi
+    // khác (mất quyền, thiết bị bận) mà nhánh catch bên _startAudioStream đã dựng.
+    if (silenced && _micError != message) {
+      setState(() => _micError = message);
+    } else if (!silenced && _micSilencedNow(l10n)) {
+      setState(() => _micError = null);
+    }
+    return silenced;
+  }
+
+  /// Cấu hình thu âm. Bình thường dùng nguồn mặc định; sau khi người dùng bấm "Giành micro" thì
+  /// leo thang lên nguồn của ứng dụng GỌI ĐIỆN.
+  ///
+  /// Vì sao không dùng nguồn gọi điện ngay từ đầu: `voiceCommunication` bật chuỗi xử lý tín hiệu
+  /// của thoại (khử vọng, nén ồn, tự chỉnh gain) và kéo cả máy sang `MODE_IN_COMMUNICATION`.
+  /// Nó thay đổi chính thứ mà hệ thống mang đi CHẤM phát âm và độ trôi chảy, nên chỉ đáng đánh
+  /// đổi khi lựa chọn còn lại là không thu được gì cả.
+  ///
+  /// Vì sao nó có thể giành được: giữa hai ứng dụng cùng ở mức ưu tiên "đang thoại", Android xử
+  /// cho bên VÀO SAU. Đây đúng là cơ chế khiến cuộc gọi Zalo cướp được micro khi bạn đang họp
+  /// Meet. Không có gì bảo đảm -- ứng dụng đặc quyền (trợ lý, trợ năng) vẫn thắng, và một số máy
+  /// nhà sản xuất chỉnh khác đi.
+  RecordConfig get _recordConfig => RecordConfig(
+        encoder: AudioEncoder.pcm16bits,
+        sampleRate: _kSampleRate,
+        numChannels: 1,
+        androidConfig: _preferCallAudio
+            ? const AndroidRecordConfig(
+                audioSource: AndroidAudioSource.voiceCommunication,
+                audioManagerMode: AudioManagerMode.modeInCommunication,
+              )
+            : const AndroidRecordConfig(),
+      );
+
+  /// Băng đang hiển thị có phải là cảnh báo BỊ BỊT TIẾNG không (khác với mic bận / mất quyền).
+  ///
+  /// So theo nội dung vì `_micError` là một chuỗi dùng chung cho mọi loại lỗi micro; hai thông
+  /// điệp này là những chuỗi duy nhất do [_probeSilencedMic] đặt.
+  bool _micSilencedNow(AppLocalizations l10n) =>
+      _micError == l10n.pzSessionMicSilenced ||
+      _micError == l10n.pzSessionMicClaimFailed;
+
+  /// Mở lại micro ở mức ưu tiên cao hơn -- nút "Giành micro" trên băng cảnh báo.
+  ///
+  /// Không hứa hẹn gì: nếu vẫn thua, watchdog sẽ đổi băng sang [pzSessionMicClaimFailed] trong
+  /// vòng một nhịp và chỉ đường còn lại (tắt micro bên Meet).
+  Future<void> _claimMicrophone() async {
+    setState(() {
+      _preferCallAudio = true;
+      _micWarningDismissed = false;
+      _micError = null;
+    });
+    await _startAudioStream();
+    // Chấm ngay kết quả thay vì đợi nhịp watchdog: người vừa bấm một cái nút thì cần biết nó ăn
+    // hay không, chứ không phải nhìn màn hình trống ba giây rồi tự đoán.
+    if (mounted) await _probeSilencedMic(force: true);
+  }
+
 
   void _handleAudioChunk(Uint8List chunk) {
     _realtimeClient.sendAudioFrame(_muted ? Uint8List(chunk.length) : chunk);
@@ -862,7 +977,21 @@ class _PracticeSessionScreenState extends State<PracticeSessionScreen>
   /// việc đó vẫn do VAD + thời gian ân hạn lo (xem _handleSpeechEnd).
   void _startTalking() {
     if (_recorderState == _RecorderState.processing) return;
+    // Chưa ở trạng thái ghi thì KHÔNG có luồng âm thanh nào tồn tại: `_audioStreamSub` chưa được
+    // tạo nên `_handleAudioChunk` không bao giờ chạy. Bản trước vẫn đổi cờ `_muted` trong tình
+    // huống đó, nên nút bấm được mà tuyệt đối không có gì xảy ra -- người dùng tưởng app đơ.
+    if (_recorderState != _RecorderState.recording) {
+      _toast(_micError ?? AppLocalizations.of(context)!.pzSessionMicBusy);
+      return;
+    }
     setState(() => _muted = false);
+    // Hỏi lại NGAY tại mỗi lần bấm nói, không đợi nhịp watchdog kế tiếp.
+    //
+    // Người dùng có quyền bỏ qua băng cảnh báo lúc vào bài -- nhưng nếu họ vẫn bấm nói trong khi
+    // micro đang bị bịt thì đó chính là lúc lời cảnh báo có ích nhất, và cũng là lúc nút "Giành
+    // micro" phải xuất hiện trở lại. Không chặn việc nói: nếu hệ điều hành trả "không biết" thì
+    // cứ để họ nói, chặn nhầm còn tệ hơn.
+    unawaited(_probeSilencedMic(force: true));
   }
 
   void _stopTalking() {
@@ -870,6 +999,14 @@ class _PracticeSessionScreenState extends State<PracticeSessionScreen>
   }
 
   /// dBFS (roughly -45..0) → 0..1.
+  /// Tần số thu. Cũng là dấu hiệu nhận ra cấu hình của chính app trong danh sách ghi âm mà
+  /// Android trả về (app gọi điện gần như luôn 48 kHz) -- xem MainActivity.isMicSilenced.
+  static const int _kSampleRate = 16000;
+
+  /// Nhịp hỏi hệ điều hành xem micro có đang bị bịt không. 3 giây đủ nhanh để người dùng biết
+  /// trước khi nói hết một câu, mà vẫn rẻ -- mỗi lượt chỉ là một lời gọi AudioManager.
+  static const Duration _silencedMicProbe = Duration(seconds: 3);
+
   double _normalise(double dbfs) {
     const floor = 45.0;
     return ((dbfs + floor) / floor).clamp(0.05, 1.0);
@@ -1030,36 +1167,106 @@ class _PracticeSessionScreenState extends State<PracticeSessionScreen>
     );
   }
 
-  /// Dải báo mic bận, kèm nút thử lại NGAY TẠI CHỖ.
+  /// Thẻ báo sự cố micro, kèm hành động sửa NGAY TẠI CHỖ.
   ///
-  /// Đặt ngay trên thanh soạn để người dùng thấy vì sao bấm nói không ăn. Thử lại chỉ gọi lại
-  /// _startAudioStream() -- không dựng lại phiên, không mất câu hỏi đang hỏi.
+  /// Đặt ngay trên thanh soạn để người dùng thấy vì sao bấm nói không ăn.
+  ///
+  /// Xếp DỌC chứ không dồn một hàng ngang: bản đầu nhét chữ, nút hành động và nút đóng vào cùng
+  /// một Row, nên hai cái nút chiếm hết bề ngang và phần chữ bị ép thành một cột hẹp gãy vụn
+  /// thành sáu bảy dòng. Tách thành ba tầng -- lời báo, gạch phân cách, hàng nút -- thì chữ
+  /// được trọn bề ngang còn nút vẫn nổi.
   Widget _buildMicErrorBanner(AppLocalizations l10n) {
+    final silenced = _micSilencedNow(l10n);
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: AppColors.chipOrangeBg,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(14),
+        // Viền cùng tông đậm hơn nền: nền cam rất nhạt (#FFF7ED) gần như trắng, không có viền
+        // thì thẻ chìm vào nền trang và trông như chữ rơi vãi chứ không phải một khối cảnh báo.
+        border: Border.all(color: AppColors.chipOrangeFg.withValues(alpha: 0.22)),
       ),
-      child: Row(
+      padding: const EdgeInsets.fromLTRB(14, 12, 8, 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.mic_off, size: 18, color: AppColors.chipOrangeFg),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              _micError!,
-              style: const TextStyle(
-                fontSize: 12.5,
-                height: 1.4,
-                color: AppColors.chipOrangeFg,
-                fontWeight: FontWeight.w600,
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Padding(
+                padding: EdgeInsets.only(top: 1),
+                child: Icon(Icons.mic_off_rounded, size: 18, color: AppColors.chipOrangeFg),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  _micError!,
+                  style: const TextStyle(
+                    fontSize: 12.5,
+                    height: 1.45,
+                    color: AppColors.chipOrangeFg,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              // Đóng được thẻ: có người CỐ Ý vừa họp vừa mở bài để xem đề, ép họ nhìn cảnh báo
+              // mãi là phiền. Bấm nói lần sau nó tự hiện lại (xem [_micWarningDismissed]).
+              SizedBox(
+                width: 32,
+                height: 32,
+                child: IconButton(
+                  padding: EdgeInsets.zero,
+                  visualDensity: VisualDensity.compact,
+                  tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
+                  icon: Icon(
+                    Icons.close_rounded,
+                    size: 16,
+                    color: AppColors.chipOrangeFg.withValues(alpha: 0.7),
+                  ),
+                  onPressed: () => setState(() {
+                    _micWarningDismissed = true;
+                    _micError = null;
+                  }),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Divider(
+            height: 1,
+            thickness: 1,
+            color: AppColors.chipOrangeFg.withValues(alpha: 0.14),
+          ),
+          const SizedBox(height: 4),
+          Align(
+            alignment: Alignment.centerRight,
+            // Bị BỊT TIẾNG khác với mở KHÔNG ĐƯỢC, nên hành động gợi ý cũng phải khác: mở lại y
+            // hệt cấu hình cũ thì chắc chắn lại bị bịt tiếp.
+            //
+            // Vẫn mời "Giành micro" cả khi lần trước đã thua: Android xử cho bên mở SAU CÙNG,
+            // nên bấm lại vào thời điểm khác hoàn toàn có thể thắng (Meet vừa nhả, người dùng
+            // vừa tắt mic bên đó). Chặn lại sau một lần thua là lấy mất của họ đúng cái nút
+            // đang cần.
+            child: TextButton.icon(
+              onPressed: silenced
+                  ? () => unawaited(_claimMicrophone())
+                  : () => unawaited(_startAudioStream()),
+              icon: Icon(
+                silenced ? Icons.mic_rounded : Icons.refresh_rounded,
+                size: 17,
+              ),
+              label: Text(
+                silenced ? l10n.pzSessionMicClaim : l10n.pzSessionMicRetry,
+                style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
+              ),
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.chipOrangeFg,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                minimumSize: const Size(0, 34),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(9)),
               ),
             ),
-          ),
-          TextButton(
-            onPressed: () => unawaited(_startAudioStream()),
-            child: Text(l10n.pzSessionMicRetry),
           ),
         ],
       ),

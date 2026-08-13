@@ -404,6 +404,7 @@ class PersonalizeRepository {
       mispronounced: mispronouncedRows,
       pendingEvaluations:
           (detail['pendingEvaluationCount'] as num?)?.toInt() ?? 0,
+      gradingGaveUp: (detail['gradingGaveUpCount'] as num?)?.toInt() ?? 0,
       difficultyRank: (detail['difficultyRank'] as num?)?.toDouble(),
     );
   }

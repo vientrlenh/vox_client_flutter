@@ -3,6 +3,8 @@ import 'package:flutter/foundation.dart';
 
 import '../storage/secure_storage.dart';
 import 'api_endpoints.dart';
+import 'auth_interceptor.dart';
+import 'session_cookies.dart';
 
 class ApiClient {
   ApiClient({
@@ -32,25 +34,13 @@ class ApiClient {
   Dio get dio => _dio;
 
   void _setupInterceptors() {
-    _dio.interceptors.add(
-      InterceptorsWrapper(
-        onRequest: (options, handler) async {
-          final token = await _secureStorage.getAccessToken();
-
-          if (token != null && token.isNotEmpty) {
-            options.headers['Authorization'] = 'Bearer $token';
-          }
-
-          handler.next(options);
-        },
-        onResponse: (response, handler) {
-          handler.next(response);
-        },
-        onError: (error, handler) {
-          handler.next(error);
-        },
-      ),
-    );
+    // Cookie TRƯỚC xác thực: đăng nhập đi qua chính client này, nên Set-Cookie mang refresh
+    // token phải được kho cookie nhận ngay tại đây -- không có nó thì mọi lượt refresh về sau
+    // (kể cả từ GraphQLClient) đều thiếu cookie và trượt.
+    _dio.interceptors.add(SessionCookies.lazyInterceptor());
+    // Bản cũ có onError nhưng chỉ handler.next(error) -- tức thấy 401 rồi thả qua. Nay 401 sẽ
+    // làm mới token và chạy lại request.
+    _dio.interceptors.add(AuthInterceptor(storage: _secureStorage));
 
     if (kDebugMode) {
       _dio.interceptors.add(

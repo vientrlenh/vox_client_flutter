@@ -1094,6 +1094,24 @@ abstract class AppLocalizations {
   /// **'The microphone is in use by another app (Google Meet, Zoom…). Close it, then tap Retry.'**
   String get pzSessionMicBusy;
 
+  /// No description provided for @pzSessionMicSilenced.
+  ///
+  /// In en, this message translates to:
+  /// **'Another app (Google Meet, Zalo…) is holding the microphone, so your voice is NOT being recorded. Leave that app, then tap Retry.'**
+  String get pzSessionMicSilenced;
+
+  /// No description provided for @pzSessionMicClaim.
+  ///
+  /// In en, this message translates to:
+  /// **'Take microphone'**
+  String get pzSessionMicClaim;
+
+  /// No description provided for @pzSessionMicClaimFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Still could not take the microphone. Android lets only ONE app capture during a call -- mute your mic in Google Meet (or leave the call) and this banner will clear itself.'**
+  String get pzSessionMicClaimFailed;
+
   /// No description provided for @pzSessionMicRetry.
   ///
   /// In en, this message translates to:

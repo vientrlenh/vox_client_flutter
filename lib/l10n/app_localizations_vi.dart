@@ -552,6 +552,17 @@ class AppLocalizationsVi extends AppLocalizations {
       'Micro đang được ứng dụng khác sử dụng (Google Meet, Zoom…). Hãy đóng ứng dụng đó rồi bấm Thử lại.';
 
   @override
+  String get pzSessionMicSilenced =>
+      'Ứng dụng khác (Google Meet, Zalo…) đang dùng micro nên tiếng của bạn KHÔNG được ghi. Hãy thoát ứng dụng đó rồi bấm Thử lại.';
+
+  @override
+  String get pzSessionMicClaim => 'Giành micro';
+
+  @override
+  String get pzSessionMicClaimFailed =>
+      'Vẫn không giành được micro. Android chỉ cho MỘT ứng dụng thu tiếng khi đang gọi -- hãy tắt micro trong Google Meet (hoặc thoát cuộc gọi), băng này sẽ tự biến mất.';
+
+  @override
   String get pzSessionMicRetry => 'Thử lại';
 
   @override
