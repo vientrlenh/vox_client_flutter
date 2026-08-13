@@ -7,7 +7,13 @@ plugins {
 
 android {
     namespace = "com.example.vox_client_flutter"
-    compileSdk = flutter.compileSdkVersion
+    // 37 chu khong phai flutter.compileSdkVersion (dang la 36): flutter_secure_storage 11
+    // khai compileSdk = 37, va rang buoc do di vao AAR metadata -- moi module dung no deu
+    // phai compile o API >= 37. Bo dong nay ve mac dinh cua Flutter la build Android hong ngay.
+    // Keo theo: AGP phai >= 9.1.1 (9.0.1 chi ho tro toi 36 va khong hieu minor version cua
+    // API 37, Google chi publish android-37.0/37.1 chu khong co android-37), va AGP 9.1.1
+    // lai doi Gradle >= 9.3.1 -- xem gradle-wrapper.properties.
+    compileSdk = 37
     ndkVersion = flutter.ndkVersion
 
     compileOptions {

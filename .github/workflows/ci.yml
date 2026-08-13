@@ -84,6 +84,11 @@ jobs:
       # flutter.sdk tu do. Khong can tao tay: `flutter build` tu sinh lai file nay
       # truoc khi goi gradle. Chi luu y la dung gradlew truc tiep se fail.
       #
+      # compileSdk cua app la 37 (flutter_secure_storage 11 ep), nen runner can SDK
+      # platform android-37.x. AGP tu tai ve khi thieu; neu lan chay nao bao
+      # "Failed to find target with hash string", them buoc:
+      #   - run: sdkmanager "platforms;android-37.1"
+      #
       # google-services.json cung khong co trong repo. Hien tai build van pass vi
       # android/app/build.gradle.kts khai bao plugin google-services voi `apply false`.
       # Neu sau nay apply that, them buoc ghi file tu secret truoc khi build:
