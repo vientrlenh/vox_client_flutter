@@ -1,5 +1,6 @@
 import '../../../core/network/graphql_client.dart';
 import 'models/practice_band_option.dart';
+import 'models/practice_framework_option.dart';
 
 /// Real GraphQL calls backing [PersonalizeRepository] — topic-selection
 /// queries plus saved-topics and dashboard stats (`practice-planning.graphqls`).
@@ -325,15 +326,37 @@ class PersonalizeApi {
     return profile?['goalType'] as String?;
   }
 
+  /// Maps to `myPracticeFrameworkOptions`.
+  ///
+  /// Các khung còn hiệu lực, mỗi khung là bản đã ban hành mới nhất. Gọi TRƯỚC
+  /// [getPracticeBandOptions]: bậc phải thuộc khung đã chọn.
+  Future<List<PracticeFrameworkOption>> getPracticeFrameworkOptions() async {
+    final data = await _client.query('''
+      query MyPracticeFrameworkOptions {
+        myPracticeFrameworkOptions {
+          versionId
+          code
+          name
+          description
+          bandCount
+        }
+      }
+    ''');
+    return (data['myPracticeFrameworkOptions'] as List? ?? const [])
+        .cast<Map<String, dynamic>>()
+        .map(PracticeFrameworkOption.fromJson)
+        .toList();
+  }
+
   /// Maps to `myPracticeBandOptions` + `myLearnerProfile { targetFrameworkBandCode }`.
   ///
   /// Trả về cả thang bậc của khung đang áp (cho ô chọn độ khó) và mã bậc mục tiêu của
   /// trường (để chọn sẵn một mục thay vì bắt học sinh nhìn danh sách trống).
   Future<({List<PracticeBandOption> options, String? defaultCode})>
-      getPracticeBandOptions() async {
+      getPracticeBandOptions({String? frameworkVersionId}) async {
     final data = await _client.query('''
-      query MyPracticeBandOptions {
-        myPracticeBandOptions {
+      query MyPracticeBandOptions(\$frameworkVersionId: ID) {
+        myPracticeBandOptions(frameworkVersionId: \$frameworkVersionId) {
           id
           code
           label
@@ -344,7 +367,7 @@ class PersonalizeApi {
           targetFrameworkBandCode
         }
       }
-    ''');
+    ''', variables: {'frameworkVersionId': frameworkVersionId});
 
     final rows = (data['myPracticeBandOptions'] as List? ?? const [])
         .cast<Map<String, dynamic>>()

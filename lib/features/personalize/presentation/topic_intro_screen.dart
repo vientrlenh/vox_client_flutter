@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../app/theme.dart';
 import '../data/models/practice_band_option.dart';
+import '../data/models/practice_framework_option.dart';
 import '../data/models/practice_topic.dart';
 import '../data/personalize_repository.dart';
 import 'personalize_styles.dart';
@@ -29,6 +30,8 @@ class _TopicIntroScreenState extends State<TopicIntroScreen> {
 
   bool _loading = true;
   String? _error;
+  List<PracticeFrameworkOption> _frameworks = const [];
+  String? _selectedFrameworkId;
   List<PracticeBandOption> _options = const [];
   String? _selectedId;
 
@@ -44,9 +47,27 @@ class _TopicIntroScreenState extends State<TopicIntroScreen> {
       _error = null;
     });
     try {
-      final result = await _repository.getPracticeBandOptions();
+      // Khung TRƯỚC, bậc SAU: bậc chỉ có nghĩa trong một khung cụ thể, và hệ thống có thể có
+      // nhiều khung cùng ban hành với số bậc khác nhau.
+      //
+      // Nuốt lỗi có chủ ý: server chưa có myPracticeFrameworkOptions (bản cũ hơn client) sẽ
+      // trả ValidationError. Để lỗi đó nổi lên thì cả màn chọn độ khó chết theo, trong khi
+      // phần bậc vẫn chạy được hoàn toàn -- rơi về đúng hành vi cũ là đủ.
+      List<PracticeFrameworkOption> frameworks;
+      try {
+        frameworks = await _repository.getPracticeFrameworkOptions();
+      } catch (_) {
+        frameworks = const [];
+      }
+      if (!mounted) return;
+      final frameworkId = frameworks.isEmpty ? null : frameworks.first.versionId;
+      final result = await _repository.getPracticeBandOptions(
+        frameworkVersionId: frameworkId,
+      );
       if (!mounted) return;
       setState(() {
+        _frameworks = frameworks;
+        _selectedFrameworkId = frameworkId;
         _options = result.options;
         // Chọn sẵn bậc mục tiêu của trường -- điểm khởi đầu có cơ sở, không phải tuyên bố
         // "đây là trình độ của em". Học sinh đổi thoải mái.
@@ -95,6 +116,8 @@ class _TopicIntroScreenState extends State<TopicIntroScreen> {
                   style: TextStyle(fontSize: 12.5, color: AppColors.textFaint),
                 ),
                 const SizedBox(height: 12),
+                _frameworkPicker(),
+                const SizedBox(height: 16),
                 _bandList(),
               ],
             ),
@@ -127,6 +150,74 @@ class _TopicIntroScreenState extends State<TopicIntroScreen> {
         ],
       ),
     );
+  }
+
+  /// Ô sổ chọn khung. Ẩn hẳn khi chỉ có một khung -- bắt học sinh chọn giữa một lựa chọn duy
+  /// nhất là thêm một bước vô nghĩa.
+  Widget _frameworkPicker() {
+    if (_loading || _frameworks.length < 2) {
+      return const SizedBox.shrink();
+    }
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          isExpanded: true,
+          value: _selectedFrameworkId,
+          hint: const Text('Chọn khung đánh giá'),
+          items: _frameworks
+              .map((framework) => DropdownMenuItem(
+                    value: framework.versionId,
+                    child: Text(
+                      '\${framework.name} · \${framework.bandCount} bậc',
+                      style: const TextStyle(
+                          fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.ink),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ))
+              .toList(),
+          onChanged: _loading ? null : _onFrameworkChanged,
+        ),
+      ),
+    );
+  }
+
+  /// Đổi khung thì nạp lại thang bậc và BỎ bậc đang chọn: id cũ thuộc khung cũ, giữ lại là gửi
+  /// lên server một bậc không thuộc khung nào đang chọn.
+  Future<void> _onFrameworkChanged(String? frameworkVersionId) async {
+    if (frameworkVersionId == null || frameworkVersionId == _selectedFrameworkId) {
+      return;
+    }
+    setState(() {
+      _selectedFrameworkId = frameworkVersionId;
+      _selectedId = null;
+      _options = const [];
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final result = await _repository.getPracticeBandOptions(
+        frameworkVersionId: frameworkVersionId,
+      );
+      if (!mounted) return;
+      setState(() {
+        _options = result.options;
+        _selectedId = _options
+            .where((option) => option.code == result.defaultCode)
+            .map((option) => option.id)
+            .firstOrNull;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _error = '\$e');
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
   }
 
   Widget _bandList() {
