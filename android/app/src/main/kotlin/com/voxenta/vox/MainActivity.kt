@@ -1,4 +1,4 @@
-package com.example.vox_client_flutter
+package com.voxenta.vox
 
 import android.content.Context
 import android.media.AudioManager

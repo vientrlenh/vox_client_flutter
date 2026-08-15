@@ -51,15 +51,26 @@ class AuthRepository {
     PushMessagingService.registerDevice();
   }
 
+  /// gỡ thiết bị nhận push trc (request cần header Authorization, còn
+  /// token thì sắp bị xoá), rồi mới xoá token cục bộ.
   Future<void> logout() async {
+    // Hai bước, THỨ TỰ quan trọng -- gộp cả hai nhánh vì chúng lo hai việc khác nhau.
+    //
+    // 1. Gỡ thiết bị nhận push TRƯỚC: request đó cần header Authorization, mà token thì sắp bị
+    //    xoá. Bỏ bước này thì máy vẫn nhận thông báo của tài khoản đã đăng xuất.
+    // 2. clearSession() thay cho clearAccessToken/clearRefreshToken: nó xoá cả COOKIE, mà
+    //    refresh token nằm chính ở đó chứ không phải trong secure storage -- AuthController trả
+    //    refreshToken = null trong body và chỉ set cookie. Chỉ xoá token thì cookie phiên cũ
+    //    còn nguyên, và người đăng nhập sau trên cùng máy có thể bị làm mới nhầm sang phiên
+    //    của người trước.
+    //
+    // Không gọi API đăng xuất: backend không có endpoint nào cho việc đó (đã kiểm
+    // AuthController).
     try {
-      await _authApi.logout();
+      await PushMessagingService.unregisterDevice();
     } catch (_) {
-      // local logout must succeed regardless
+      // Gỡ thiết bị hỏng không được phép chặn đăng xuất.
     }
-    // Xoá cả cookie: refresh token nằm ở đó chứ không phải trong secure storage. Bỏ bước này
-    // thì cookie phiên cũ còn nguyên, và người đăng nhập sau trên cùng máy có thể bị làm mới
-    // nhầm sang phiên của người trước.
     await TokenRefresher.clearSession();
   }
 }

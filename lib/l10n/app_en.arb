@@ -30,12 +30,24 @@
   "greetingAfternoon": "Good afternoon",
   "greetingEvening": "Good evening",
   "homeContinueLearning": "Continue with",
-  "homeExamsToComplete": "Exams To Complete",
+  "homeExamsToComplete": "Upcoming exams",
   "homeNoExamsLeft": "No exams left to complete",
   "homeNoDateSet": "No date set",
   "homeNotCompleted": "Not completed",
-  "homeSearchLessons": "Search lessons…",
+  "homeSearchLessons": "Search topics, lessons…",
   "homeResume": "Resume →",
+  "homeSeeSchedule": "View full schedule",
+  "homeProgressTitle": "Progress — last 7 sessions",
+  "homeDaysLeft": "{count} days left",
+  "@homeDaysLeft": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "homeDueToday": "Today",
+  "homeOverdue": "Overdue",
   "notificationsTitle": "Notifications",
   "notificationsMarkAllRead": "Mark all read",
   "notificationsGroupNew": "New",

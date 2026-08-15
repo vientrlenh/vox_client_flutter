@@ -28,7 +28,7 @@ class TeacherExamRestApi {
       'existingBlueprintVersionId': ?existingBlueprintVersionId,
     });
     return ExamDetail.fromJson(
-      response.data['exam'] as Map<String, dynamic>,
+      response.data['data']['exam'] as Map<String, dynamic>,
     );
   }
 
