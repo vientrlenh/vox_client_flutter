@@ -52,7 +52,13 @@ class _MainShellState extends State<MainShell> {
 
     // Personalized practice is a student feature — teachers keep three tabs.
     final screens = [
-      if (_isTeacher) const TeacherExamListScreen() else const HomeScreen(),
+      if (_isTeacher)
+        const TeacherExamListScreen()
+      else
+        HomeScreen(
+          onOpenSchedule: () => setState(() => _index = 2),
+          onOpenPractice: () => setState(() => _index = 1),
+        ),
       if (!_isTeacher) const PracticeTab(),
       const ScheduleScreen(),
       const ProfileScreen(),

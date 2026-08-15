@@ -1,4 +1,4 @@
-package com.example.vox_client_flutter
+package com.voxenta.vox
 
 import io.flutter.embedding.android.FlutterActivity
 

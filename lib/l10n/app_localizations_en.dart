@@ -99,7 +99,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeContinueLearning => 'Continue with';
 
   @override
-  String get homeExamsToComplete => 'Exams To Complete';
+  String get homeExamsToComplete => 'Upcoming exams';
 
   @override
   String get homeNoExamsLeft => 'No exams left to complete';
@@ -111,10 +111,27 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeNotCompleted => 'Not completed';
 
   @override
-  String get homeSearchLessons => 'Search lessons…';
+  String get homeSearchLessons => 'Search topics, lessons…';
 
   @override
   String get homeResume => 'Resume →';
+
+  @override
+  String get homeSeeSchedule => 'View full schedule';
+
+  @override
+  String get homeProgressTitle => 'Progress — last 7 sessions';
+
+  @override
+  String homeDaysLeft(int count) {
+    return '$count days left';
+  }
+
+  @override
+  String get homeDueToday => 'Today';
+
+  @override
+  String get homeOverdue => 'Overdue';
 
   @override
   String get notificationsTitle => 'Notifications';

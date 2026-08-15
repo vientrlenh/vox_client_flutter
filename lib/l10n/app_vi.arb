@@ -30,12 +30,24 @@
   "greetingAfternoon": "Chào buổi chiều",
   "greetingEvening": "Chào buổi tối",
   "homeContinueLearning": "Tiếp tục với",
-  "homeExamsToComplete": "Bài cần hoàn thành",
+  "homeExamsToComplete": "Lịch thi sắp tới",
   "homeNoExamsLeft": "Không còn bài nào cần hoàn thành",
   "homeNoDateSet": "Chưa có ngày",
   "homeNotCompleted": "Chưa hoàn thành",
-  "homeSearchLessons": "Tìm bài học…",
+  "homeSearchLessons": "Tìm chủ đề, bài học…",
   "homeResume": "Tiếp tục →",
+  "homeSeeSchedule": "Xem lịch chi tiết",
+  "homeProgressTitle": "Tiến bộ 7 buổi gần đây",
+  "homeDaysLeft": "Còn {count} ngày",
+  "@homeDaysLeft": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "homeDueToday": "Hôm nay",
+  "homeOverdue": "Quá hạn",
   "notificationsTitle": "Thông báo",
   "notificationsMarkAllRead": "Đánh dấu đã đọc tất cả",
   "notificationsGroupNew": "Mới",

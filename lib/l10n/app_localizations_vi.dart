@@ -99,7 +99,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get homeContinueLearning => 'Tiếp tục với';
 
   @override
-  String get homeExamsToComplete => 'Bài cần hoàn thành';
+  String get homeExamsToComplete => 'Lịch thi sắp tới';
 
   @override
   String get homeNoExamsLeft => 'Không còn bài nào cần hoàn thành';
@@ -111,10 +111,27 @@ class AppLocalizationsVi extends AppLocalizations {
   String get homeNotCompleted => 'Chưa hoàn thành';
 
   @override
-  String get homeSearchLessons => 'Tìm bài học…';
+  String get homeSearchLessons => 'Tìm chủ đề, bài học…';
 
   @override
   String get homeResume => 'Tiếp tục →';
+
+  @override
+  String get homeSeeSchedule => 'Xem lịch chi tiết';
+
+  @override
+  String get homeProgressTitle => 'Tiến bộ 7 buổi gần đây';
+
+  @override
+  String homeDaysLeft(int count) {
+    return 'Còn $count ngày';
+  }
+
+  @override
+  String get homeDueToday => 'Hôm nay';
+
+  @override
+  String get homeOverdue => 'Quá hạn';
 
   @override
   String get notificationsTitle => 'Thông báo';

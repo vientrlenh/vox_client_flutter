@@ -50,12 +50,10 @@ class AuthRepository {
     PushMessagingService.registerDevice();
   }
 
+  /// gỡ thiết bị nhận push trc (request cần header Authorization, còn
+  /// token thì sắp bị xoá), rồi mới xoá token cục bộ.
   Future<void> logout() async {
-    try {
-      await _authApi.logout();
-    } catch (_) {
-      // local logout must succeed regardless
-    }
+    await PushMessagingService.unregisterDevice();
     await _secureStorage.clearAccessToken();
     await _secureStorage.clearRefreshToken();
   }

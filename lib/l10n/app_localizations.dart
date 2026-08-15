@@ -281,7 +281,7 @@ abstract class AppLocalizations {
   /// No description provided for @homeExamsToComplete.
   ///
   /// In en, this message translates to:
-  /// **'Exams To Complete'**
+  /// **'Upcoming exams'**
   String get homeExamsToComplete;
 
   /// No description provided for @homeNoExamsLeft.
@@ -305,7 +305,7 @@ abstract class AppLocalizations {
   /// No description provided for @homeSearchLessons.
   ///
   /// In en, this message translates to:
-  /// **'Search lessons…'**
+  /// **'Search topics, lessons…'**
   String get homeSearchLessons;
 
   /// No description provided for @homeResume.
@@ -313,6 +313,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Resume →'**
   String get homeResume;
+
+  /// No description provided for @homeSeeSchedule.
+  ///
+  /// In en, this message translates to:
+  /// **'View full schedule'**
+  String get homeSeeSchedule;
+
+  /// No description provided for @homeProgressTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Progress — last 7 sessions'**
+  String get homeProgressTitle;
+
+  /// No description provided for @homeDaysLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} days left'**
+  String homeDaysLeft(int count);
+
+  /// No description provided for @homeDueToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get homeDueToday;
+
+  /// No description provided for @homeOverdue.
+  ///
+  /// In en, this message translates to:
+  /// **'Overdue'**
+  String get homeOverdue;
 
   /// No description provided for @notificationsTitle.
   ///

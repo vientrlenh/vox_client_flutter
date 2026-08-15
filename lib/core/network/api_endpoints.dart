@@ -17,8 +17,15 @@ class ApiEndpoints {
       .replaceFirst(RegExp(r'^http'), 'ws');
 
   static const String login = "/v1/auth/login";
-  static const String googleLogin = "/oauth2/google/token";
-  static const String logout = "/v1/auth/logout";
+  /// Xác thực Google idToken lấy được native trên app (khác hẳn luồng redirect
+  /// trình duyệt mà web dùng) -- backend trả thẳng accessToken/refreshToken trong body vì app không dùng cookie.
+  static const String googleLogin = "/v1/auth/oauth2/google/token";
+  // Không có endpoint đăng xuất phía backend: logout chỉ gỡ thiết
+  // bị nhận push rồi xoá token cục bộ -- xem AuthRepository.logout().
+  /// Web gửi refresh token qua cookie HttpOnly; app không có cookie jar nên gửi
+  /// thẳng trong body (xem `ApiClient._refreshAccessToken`) và backend trả
+  /// refreshToken mới lại trong body thay vì chỉ set cookie.
+  static const String refresh = "/v1/auth/refresh";
   /// Thiết bị nhận thông báo đẩy. Định danh là FID (Firebase Installation ID),
   /// KHÔNG phải FCM token -- backend gửi push bằng `MulticastMessage.addAllFids`.
   static const String notificationDevices = "/v1/notifications/devices";
