@@ -105,6 +105,10 @@ class AppLocalizationsVi extends AppLocalizations {
   String get homeNoExamsLeft => 'Không còn bài nào cần hoàn thành';
 
   @override
+  String get homeExamsLoadFailed =>
+      'Không tải được lịch thi. Kiểm tra kết nối rồi thử lại.';
+
+  @override
   String get homeNoDateSet => 'Chưa có ngày';
 
   @override

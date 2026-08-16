@@ -32,6 +32,7 @@
   "homeContinueLearning": "Continue with",
   "homeExamsToComplete": "Upcoming exams",
   "homeNoExamsLeft": "No exams left to complete",
+  "homeExamsLoadFailed": "Could not load your exam schedule. Check your connection and try again.",
   "homeNoDateSet": "No date set",
   "homeNotCompleted": "Not completed",
   "homeSearchLessons": "Search topics, lessons…",

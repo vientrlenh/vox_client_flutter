@@ -316,6 +316,12 @@ class PersonalizeRepository {
     return items.map(InterestQuizItem.fromJson).toList();
   }
 
+  /// Maps to `regenerateInterestQuiz` — lối "làm lại onboarding" ở màn Hồ sơ.
+  Future<List<InterestQuizItem>> regenerateInterestQuizItems() async {
+    final items = await _api.regenerateInterestQuizItems();
+    return items.map(InterestQuizItem.fromJson).toList();
+  }
+
   /// Maps to `submitInterestQuiz` — scores answers into the real
   /// `dimension_interest_score` vector server-side.
   Future<void> submitInterestQuiz(List<InterestQuizAnswer> answers) {

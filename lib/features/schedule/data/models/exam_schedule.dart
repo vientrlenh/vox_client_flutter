@@ -33,6 +33,27 @@ class ExamSchedule {
     );
   }
 
+  /// Dựng từ một CA THI (`myExamSchedules`) thay vì từ kỳ thi.
+  ///
+  /// Khác biệt quan trọng nằm ở thời gian: `openAt`/`closeAt` của kỳ thi là cửa sổ cho phép
+  /// làm bài của CẢ kỳ, còn `startDate`/`endDate` của ca là giờ thi THẬT của chính học sinh
+  /// này. Trang chủ hỏi "sắp thi lúc nào" nên phải dùng giờ của ca.
+  ///
+  /// `id` lấy của KỲ THI chứ không phải của ca: mọi màn phía sau đều điều hướng theo examId,
+  /// và một học sinh chỉ có một ca cho mỗi kỳ nên không mất thông tin.
+  factory ExamSchedule.fromScheduleJson(Map<String, dynamic> json) {
+    final exam = json['exam'] as Map<String, dynamic>?;
+    return ExamSchedule(
+      id: (exam?['id'] ?? json['id']) as String,
+      name: (exam?['name'] as String?) ?? '',
+      description: exam?['description'] as String?,
+      kind: _kindFromJson(exam?['kind'] as String?),
+      status: _statusFromJson(exam?['status'] as String?),
+      openAt: _parseDate(json['startDate'] as String?),
+      closeAt: _parseDate(json['endDate'] as String?),
+    );
+  }
+
   static DateTime? _parseDate(String? value) =>
       value == null ? null : DateTime.tryParse(value)?.toLocal();
 

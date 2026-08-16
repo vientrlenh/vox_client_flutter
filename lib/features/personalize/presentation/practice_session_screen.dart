@@ -1351,7 +1351,6 @@ class _PracticeSessionScreenState extends State<PracticeSessionScreen>
               CorrectionCard(
                 turn: turn,
                 showContinue: showContinue,
-                onHearCorrect: () => _toast(l10n.pzSessionNoSampleAudio),
                 onContinue: _handleContinue,
                 continueReady: _continueReady,
               ),

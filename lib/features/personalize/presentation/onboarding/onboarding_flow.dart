@@ -25,7 +25,16 @@ import 'interest_quiz_step.dart';
 /// onboarding "done" here would permanently strand the student with an empty
 /// interest vector on this device, with no automatic way back in.
 class OnboardingFlow extends StatefulWidget {
-  const OnboardingFlow({super.key});
+  const OnboardingFlow({super.key, this.regenerate = false});
+
+  /// `true` khi vào từ lối "làm lại onboarding" ở màn Hồ sơ.
+  ///
+  /// Lúc đó gọi `regenerateInterestQuiz` thay vì `interestQuizItems`. Server tự quyết: bộ cũ
+  /// chưa nộp xong thì trả lại đúng bộ đó để làm tiếp, nộp xong rồi mới sinh bộ mới. Nên
+  /// client không cần tự kiểm gì -- và bấm nhầm cũng không vứt mất bài đang làm dở.
+  ///
+  /// Lối vào lần đầu (PracticeTab) để `false`: học sinh chưa có bộ nào, không có gì để làm lại.
+  final bool regenerate;
 
   @override
   State<OnboardingFlow> createState() => _OnboardingFlowState();
@@ -59,7 +68,9 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
       _error = null;
     });
     try {
-      final quizItems = await _repository.getInterestQuizItems();
+      final quizItems = widget.regenerate
+          ? await _repository.regenerateInterestQuizItems()
+          : await _repository.getInterestQuizItems();
       if (!mounted) return;
       setState(() => _quizItems = quizItems);
     } catch (e) {

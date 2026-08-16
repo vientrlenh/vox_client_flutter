@@ -105,6 +105,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeNoExamsLeft => 'No exams left to complete';
 
   @override
+  String get homeExamsLoadFailed =>
+      'Could not load your exam schedule. Check your connection and try again.';
+
+  @override
   String get homeNoDateSet => 'No date set';
 
   @override

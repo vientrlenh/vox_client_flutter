@@ -413,6 +413,25 @@ class PersonalizeApi {
     return items.cast<Map<String, dynamic>>();
   }
 
+  /// Maps to `regenerateInterestQuiz` — dùng cho lối "làm lại onboarding" ở màn Hồ sơ.
+  ///
+  /// Server tự quyết: bộ cũ CHƯA nộp xong thì trả lại đúng bộ đó để làm tiếp, nộp xong rồi
+  /// mới tắt bộ cũ và sinh bộ mới. Nên client không cần tự kiểm `quizCompletedAt` -- gọi
+  /// thẳng, không sợ vứt mất bài đang làm dở.
+  Future<List<Map<String, dynamic>>> regenerateInterestQuizItems() async {
+    final data = await _client.query('''
+      mutation RegenerateInterestQuiz {
+        regenerateInterestQuiz {
+          id
+          statements
+        }
+      }
+    ''');
+
+    final items = data['regenerateInterestQuiz'] as List;
+    return items.cast<Map<String, dynamic>>();
+  }
+
   /// Maps to `submitInterestQuiz(input)` — scores the answers into the
   /// student's dimension_interest_score vector server-side.
   Future<Map<String, dynamic>> submitInterestQuiz(

@@ -32,6 +32,7 @@
   "homeContinueLearning": "Tiếp tục với",
   "homeExamsToComplete": "Lịch thi sắp tới",
   "homeNoExamsLeft": "Không còn bài nào cần hoàn thành",
+  "homeExamsLoadFailed": "Không tải được lịch thi. Kiểm tra kết nối rồi thử lại.",
   "homeNoDateSet": "Chưa có ngày",
   "homeNotCompleted": "Chưa hoàn thành",
   "homeSearchLessons": "Tìm chủ đề, bài học…",

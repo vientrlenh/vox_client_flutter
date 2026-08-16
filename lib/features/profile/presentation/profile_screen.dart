@@ -99,7 +99,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     await PreferenceStorage().savePracticeOnboardingDone(false);
     if (!mounted) return;
     await Navigator.of(context).push<bool>(
-      MaterialPageRoute(builder: (_) => const OnboardingFlow()),
+      MaterialPageRoute(builder: (_) => const OnboardingFlow(regenerate: true)),
     );
   }
 

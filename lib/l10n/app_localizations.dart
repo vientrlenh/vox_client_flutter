@@ -290,6 +290,12 @@ abstract class AppLocalizations {
   /// **'No exams left to complete'**
   String get homeNoExamsLeft;
 
+  /// No description provided for @homeExamsLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load your exam schedule. Check your connection and try again.'**
+  String get homeExamsLoadFailed;
+
   /// No description provided for @homeNoDateSet.
   ///
   /// In en, this message translates to:
