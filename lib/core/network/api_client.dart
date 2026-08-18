@@ -1,9 +1,6 @@
-import 'dart:async';
-
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 
-import '../../app/router.dart';
 import '../storage/secure_storage.dart';
 import 'api_endpoints.dart';
 import 'auth_interceptor.dart';
@@ -34,13 +31,6 @@ class ApiClient {
   final SecureStorage _secureStorage;
   final Dio _dio;
 
-  /// Khoá refresh dùng chung cho MỌI instance của [ApiClient] (không có DI
-  /// singleton trong app, mỗi màn hình tự `ApiClient()` riêng) -- nếu để là field
-  /// thường thì hai request 401 cùng lúc từ hai instance khác nhau sẽ gọi
-  /// `/v1/auth/refresh` hai lần, và lần thứ hai sẽ nuốt luôn access token mới
-  /// vừa được lần đầu tạo ra (refresh token cũ đã bị đánh dấu used).
-  static Completer<bool>? _refreshCompleter;
-
   Dio get dio => _dio;
 
   void _setupInterceptors() {
@@ -64,61 +54,6 @@ class ApiClient {
         ),
       );
     }
-  }
-
-  /// Refresh access token khi request ăn 401. Nhiều request cùng lúc chỉ kích
-  /// một lần gọi `/v1/auth/refresh` thật sự -- các request khác đợi chung kết quả
-  /// qua [_refreshCompleter] (refresh token bị đánh dấu "used" ngay sau lần đầu
-  /// dùng, gọi trùng sẽ làm request thứ hai bị backend từ chối).
-  ///
-  /// Trả `false` và đăng xuất cưỡng bức khi không refresh được -- phiên đã hết
-  /// hạn thật sự (refresh token cũng hết hạn/bị thu hồi), không có gì để thử lại.
-  Future<bool> _refreshAccessToken() {
-    final inFlight = _refreshCompleter;
-    if (inFlight != null) return inFlight.future;
-
-    final completer = Completer<bool>();
-    _refreshCompleter = completer;
-
-    Future(() async {
-      try {
-        final deviceId = await _secureStorage.getDeviceId();
-        final refreshToken = await _secureStorage.getRefreshToken();
-        if (deviceId == null || refreshToken == null) {
-          await _forceLogout();
-          completer.complete(false);
-          return;
-        }
-
-        final response = await Dio(_dio.options).post(ApiEndpoints.refresh, data: {
-          'deviceId': deviceId,
-          'refreshToken': refreshToken,
-        });
-        final data = response.data['data'] as Map<String, dynamic>;
-
-        await _secureStorage.saveAccessToken(data['accessToken'] as String);
-        final newRefreshToken = data['refreshToken'] as String?;
-        if (newRefreshToken != null) {
-          await _secureStorage.saveRefreshToken(newRefreshToken);
-        }
-
-        completer.complete(true);
-      } catch (_) {
-        await _forceLogout();
-        completer.complete(false);
-      } finally {
-        _refreshCompleter = null;
-      }
-    });
-
-    return completer.future;
-  }
-
-  Future<void> _forceLogout() async {
-    await _secureStorage.clearAccessToken();
-    await _secureStorage.clearRefreshToken();
-    AppRouter.navigatorKey.currentState
-        ?.pushNamedAndRemoveUntil(AppRouter.login, (route) => false);
   }
 
   Future<Response<dynamic>> get(
