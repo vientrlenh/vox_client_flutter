@@ -2,6 +2,7 @@ import 'package:vox_client_flutter/features/auth/data/models/login_response.dart
 
 import '../../../core/device/device_info.dart';
 import '../../../core/messaging/push_messaging_service.dart';
+import '../../../core/network/token_refresher.dart';
 import '../../../core/storage/secure_storage.dart';
 import 'auth_api.dart';
 
@@ -53,8 +54,23 @@ class AuthRepository {
   /// gỡ thiết bị nhận push trc (request cần header Authorization, còn
   /// token thì sắp bị xoá), rồi mới xoá token cục bộ.
   Future<void> logout() async {
-    await PushMessagingService.unregisterDevice();
-    await _secureStorage.clearAccessToken();
-    await _secureStorage.clearRefreshToken();
+    // Hai bước, THỨ TỰ quan trọng -- gộp cả hai nhánh vì chúng lo hai việc khác nhau.
+    //
+    // 1. Gỡ thiết bị nhận push TRƯỚC: request đó cần header Authorization, mà token thì sắp bị
+    //    xoá. Bỏ bước này thì máy vẫn nhận thông báo của tài khoản đã đăng xuất.
+    // 2. clearSession() thay cho clearAccessToken/clearRefreshToken: nó xoá cả COOKIE, mà
+    //    refresh token nằm chính ở đó chứ không phải trong secure storage -- AuthController trả
+    //    refreshToken = null trong body và chỉ set cookie. Chỉ xoá token thì cookie phiên cũ
+    //    còn nguyên, và người đăng nhập sau trên cùng máy có thể bị làm mới nhầm sang phiên
+    //    của người trước.
+    //
+    // Không gọi API đăng xuất: backend không có endpoint nào cho việc đó (đã kiểm
+    // AuthController).
+    try {
+      await PushMessagingService.unregisterDevice();
+    } catch (_) {
+      // Gỡ thiết bị hỏng không được phép chặn đăng xuất.
+    }
+    await TokenRefresher.clearSession();
   }
 }

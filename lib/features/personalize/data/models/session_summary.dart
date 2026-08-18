@@ -27,6 +27,10 @@ class SessionSummary {
   /// chấm chạy bất đồng bộ và về sau khi phiên đã đóng vài chục giây.
   final int pendingEvaluations;
 
+  /// Số câu hệ thống chấm hỏng và ĐÃ HẾT LƯỢT THỬ. Khác hẳn "đang chờ": chờ thì rồi sẽ có,
+  /// bỏ cuộc thì không bao giờ. Gộp hai thứ làm một là bắt học sinh ngồi quay vòng vô ích.
+  final int gradingGaveUp;
+
   /// Trung bình độ khó các câu đã trả lời. null khi chưa có câu nào.
   ///
   /// Hiện cạnh điểm vì điểm MỘT MÌNH không đọc được: nó neo vào bậc mục tiêu, còn độ khó câu
@@ -54,12 +58,18 @@ class SessionSummary {
     this.mispronounced = const [],
     this.drillMinutes = 4,
     this.pendingEvaluations = 0,
+    this.gradingGaveUp = 0,
     this.scoreScaleMin = 0,
     this.scoreScaleMax = 100,
     this.difficultyRank,
   });
 
-  bool get stillGrading => pendingEvaluations > 0;
+  /// Còn câu chưa chấm xong VÀ vẫn còn hy vọng. Câu đã bỏ cuộc không tính vào đây -- chờ một
+  /// kết quả sẽ không bao giờ tới là cách chắc chắn nhất để màn hình quay mãi.
+  bool get stillGrading => pendingEvaluations > gradingGaveUp;
+
+  /// Có câu hệ thống chấm không xong và đã thôi thử. Những câu này VĨNH VIỄN không có điểm.
+  bool get hasGradingFailure => gradingGaveUp > 0;
 
   factory SessionSummary.fromJson(Map<String, dynamic> json) {
     return SessionSummary(

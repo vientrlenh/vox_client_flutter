@@ -105,6 +105,10 @@ class AppLocalizationsVi extends AppLocalizations {
   String get homeNoExamsLeft => 'Không còn bài nào cần hoàn thành';
 
   @override
+  String get homeExamsLoadFailed =>
+      'Không tải được lịch thi. Kiểm tra kết nối rồi thử lại.';
+
+  @override
   String get homeNoDateSet => 'Chưa có ngày';
 
   @override
@@ -414,6 +418,10 @@ class AppLocalizationsVi extends AppLocalizations {
   String get pzLoadError => 'Không thể tải phần ôn luyện cá nhân hoá.';
 
   @override
+  String get pzPlanLimitExceeded =>
+      'Trường bạn chưa có gói đang hoạt động, vui lòng liên hệ nhà trường để tiếp tục luyện tập AI.';
+
+  @override
   String get pzSeeAll => 'Tất cả';
 
   @override
@@ -567,6 +575,17 @@ class AppLocalizationsVi extends AppLocalizations {
   @override
   String get pzSessionMicBusy =>
       'Micro đang được ứng dụng khác sử dụng (Google Meet, Zoom…). Hãy đóng ứng dụng đó rồi bấm Thử lại.';
+
+  @override
+  String get pzSessionMicSilenced =>
+      'Ứng dụng khác (Google Meet, Zalo…) đang dùng micro nên tiếng của bạn KHÔNG được ghi. Hãy thoát ứng dụng đó rồi bấm Thử lại.';
+
+  @override
+  String get pzSessionMicClaim => 'Giành micro';
+
+  @override
+  String get pzSessionMicClaimFailed =>
+      'Vẫn không giành được micro. Android chỉ cho MỘT ứng dụng thu tiếng khi đang gọi -- hãy tắt micro trong Google Meet (hoặc thoát cuộc gọi), băng này sẽ tự biến mất.';
 
   @override
   String get pzSessionMicRetry => 'Thử lại';

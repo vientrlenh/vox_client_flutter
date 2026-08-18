@@ -1,5 +1,6 @@
 import '../../../core/network/graphql_client.dart';
 import 'models/practice_band_option.dart';
+import 'models/practice_framework_option.dart';
 
 /// Real GraphQL calls backing [PersonalizeRepository] — topic-selection
 /// queries plus saved-topics and dashboard stats (`practice-planning.graphqls`).
@@ -246,6 +247,7 @@ class PersonalizeApi {
     gradedSeconds
     startedAt
     endedAt
+    pendingEvaluations
   ''';
 
   /// Maps to `startPracticeSession(paperId)` — mints the real session id, which is also the
@@ -324,15 +326,37 @@ class PersonalizeApi {
     return profile?['goalType'] as String?;
   }
 
+  /// Maps to `myPracticeFrameworkOptions`.
+  ///
+  /// Các khung còn hiệu lực, mỗi khung là bản đã ban hành mới nhất. Gọi TRƯỚC
+  /// [getPracticeBandOptions]: bậc phải thuộc khung đã chọn.
+  Future<List<PracticeFrameworkOption>> getPracticeFrameworkOptions() async {
+    final data = await _client.query('''
+      query MyPracticeFrameworkOptions {
+        myPracticeFrameworkOptions {
+          versionId
+          code
+          name
+          description
+          bandCount
+        }
+      }
+    ''');
+    return (data['myPracticeFrameworkOptions'] as List? ?? const [])
+        .cast<Map<String, dynamic>>()
+        .map(PracticeFrameworkOption.fromJson)
+        .toList();
+  }
+
   /// Maps to `myPracticeBandOptions` + `myLearnerProfile { targetFrameworkBandCode }`.
   ///
   /// Trả về cả thang bậc của khung đang áp (cho ô chọn độ khó) và mã bậc mục tiêu của
   /// trường (để chọn sẵn một mục thay vì bắt học sinh nhìn danh sách trống).
   Future<({List<PracticeBandOption> options, String? defaultCode})>
-      getPracticeBandOptions() async {
+      getPracticeBandOptions({String? frameworkVersionId}) async {
     final data = await _client.query('''
-      query MyPracticeBandOptions {
-        myPracticeBandOptions {
+      query MyPracticeBandOptions(\$frameworkVersionId: ID) {
+        myPracticeBandOptions(frameworkVersionId: \$frameworkVersionId) {
           id
           code
           label
@@ -343,7 +367,7 @@ class PersonalizeApi {
           targetFrameworkBandCode
         }
       }
-    ''');
+    ''', variables: {'frameworkVersionId': frameworkVersionId});
 
     final rows = (data['myPracticeBandOptions'] as List? ?? const [])
         .cast<Map<String, dynamic>>()
@@ -386,6 +410,25 @@ class PersonalizeApi {
     ''');
 
     final items = data['interestQuizItems'] as List;
+    return items.cast<Map<String, dynamic>>();
+  }
+
+  /// Maps to `regenerateInterestQuiz` — dùng cho lối "làm lại onboarding" ở màn Hồ sơ.
+  ///
+  /// Server tự quyết: bộ cũ CHƯA nộp xong thì trả lại đúng bộ đó để làm tiếp, nộp xong rồi
+  /// mới tắt bộ cũ và sinh bộ mới. Nên client không cần tự kiểm `quizCompletedAt` -- gọi
+  /// thẳng, không sợ vứt mất bài đang làm dở.
+  Future<List<Map<String, dynamic>>> regenerateInterestQuizItems() async {
+    final data = await _client.query('''
+      mutation RegenerateInterestQuiz {
+        regenerateInterestQuiz {
+          id
+          statements
+        }
+      }
+    ''');
+
+    final items = data['regenerateInterestQuiz'] as List;
     return items.cast<Map<String, dynamic>>();
   }
 
@@ -503,6 +546,7 @@ class PersonalizeApi {
           scoreScaleMax
           completed
           pendingEvaluationCount
+          gradingGaveUpCount
           difficultyRank
           criterionScores { criterionCode score }
           turns {

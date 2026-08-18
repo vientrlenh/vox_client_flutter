@@ -135,6 +135,15 @@ class _SessionSummaryScreenState extends State<SessionSummaryScreen> {
         // Quá hạn chờ mà vẫn chưa xong: lúc này hiện những gì đang có LÀ đúng -- chấm có thể
         // hỏng thật, và để trống vô hạn thì học sinh mất trắng cả buổi luyện. Banner nói rõ
         // con số chưa đầy đủ.
+        // Hệ thống ĐÃ BỎ CUỘC, khác hẳn _GradingStalledBanner ở trên.
+        //
+        // Banner kia nghĩa là "client thôi chờ, có thể vẫn đang chấm"; banner này nghĩa là
+        // "server đã thử hết lượt và dừng hẳn, mấy câu đó VĨNH VIỄN không có điểm". Trộn hai
+        // thông điệp là để học sinh cứ mở đi mở lại chờ một kết quả sẽ không bao giờ tới.
+        if (summary.hasGradingFailure) ...[
+          _GradingFailedBanner(failedCount: summary.gradingGaveUp),
+          const SizedBox(height: 12),
+        ],
         if (_gaveUpWaiting && summary.stillGrading) ...[
           const _GradingStalledBanner(),
           const SizedBox(height: 12),
@@ -235,6 +244,62 @@ class _GradingBanner extends StatelessWidget {
 }
 
 /// Quá hạn chờ mà vẫn chưa chấm xong. Nói thật là có trục trặc, thay vì quay vô hạn.
+/// Hệ thống chấm không xong và ĐÃ THÔI THỬ -- những câu đó vĩnh viễn không có điểm.
+///
+/// Nói thẳng thay vì để màn hình quay: chấm hỏng do dữ liệu (audio vỡ, transcript rỗng) thì
+/// thử lại bao nhiêu lần cũng hỏng y hệt, nên chờ thêm chỉ là chờ vô ích. Điểm hiện bên dưới
+/// vẫn đúng -- nó là trung bình trên những câu chấm được -- nhưng học sinh phải biết nó thiếu
+/// mấy câu, để không tưởng mình làm tệ hơn thực tế.
+class _GradingFailedBanner extends StatelessWidget {
+  const _GradingFailedBanner({required this.failedCount});
+
+  final int failedCount;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.chipOrangeBg,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.error_outline, size: 18, color: AppColors.chipOrangeFg),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Có $failedCount câu hệ thống chấm không xong',
+                  style: const TextStyle(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.chipOrangeFg,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  'Mấy câu đó sẽ không có điểm, và hệ thống đã thôi thử lại nên bạn không cần '
+                  'chờ thêm. Điểm bên dưới tính trên những câu chấm được, nên nó chưa phản ánh '
+                  'hết buổi nói của bạn.',
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    height: 1.45,
+                    color: AppColors.chipOrangeFg,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _GradingStalledBanner extends StatelessWidget {
   const _GradingStalledBanner();
 

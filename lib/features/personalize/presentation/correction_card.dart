@@ -12,14 +12,16 @@ class CorrectionCard extends StatefulWidget {
   const CorrectionCard({
     super.key,
     required this.turn,
-    required this.onHearCorrect,
     required this.onContinue,
     this.continueReady = true,
     this.showContinue = true,
   });
 
   final PracticeTurn turn;
-  final VoidCallback onHearCorrect;
+
+  // GỠ: onHearCorrect ("Nghe câu đúng"). Không có audio mẫu nào để phát -- nơi gọi duy nhất
+  // chỉ hiện toast pzSessionNoSampleAudio, tức nút luôn báo "chưa có". Footer nay còn một
+  // hành động là "Tiếp tục".
 
   /// Advances to whatever's next — a follow-up or a new MAIN question alike (gói 11 mục
   /// 2.2/2.7b, click-to-continue). Replaces the old "Nói lại" action; there is no
@@ -35,8 +37,8 @@ class CorrectionCard extends StatefulWidget {
   ///
   /// Các lượt cũ vẫn giữ nguyên phần nội dung sửa lỗi để học sinh cuộn lên xem lại cả buổi
   /// -- trước đây cả thẻ bị ẩn khi có lượt mới, nên bấm "Tiếp tục" là mất sạch phần sửa của
-  /// những câu đã nói. Nút "Tiếp tục"/"Nghe câu đúng" thì không nhân bản ở mọi thẻ, vì hai
-  /// nút đó tác động lên lượt hiện tại chứ không phải lượt đang xem.
+  /// những câu đã nói. Nút "Tiếp tục" thì không nhân bản ở mọi thẻ, vì nó tác động lên lượt
+  /// hiện tại chứ không phải lượt đang xem.
   final bool showContinue;
 
   @override
@@ -217,29 +219,12 @@ class _CorrectionCardState extends State<CorrectionCard> {
               // ── Footer actions -- chỉ lượt mới nhất, xem showContinue ──
               if (widget.showContinue) ...[
                 const Divider(height: 1, color: Color(0xFFF1F1F1)),
-                IntrinsicHeight(
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: _FooterAction(
-                          icon: Icons.volume_up,
-                          label: l10n.pzSessionHearCorrect,
-                          color: AppColors.indigo,
-                          onTap: widget.onHearCorrect,
-                        ),
-                      ),
-                      const VerticalDivider(width: 1, color: Color(0xFFF1F1F1)),
-                      Expanded(
-                        child: _FooterAction(
-                          icon: Icons.arrow_forward,
-                          label: l10n.pzSessionContinue,
-                          color: AppColors.indigo,
-                          onTap: widget.onContinue,
-                          loading: !widget.continueReady,
-                        ),
-                      ),
-                    ],
-                  ),
+                _FooterAction(
+                  icon: Icons.arrow_forward,
+                  label: l10n.pzSessionContinue,
+                  color: AppColors.indigo,
+                  onTap: widget.onContinue,
+                  loading: !widget.continueReady,
                 ),
               ],
             ],

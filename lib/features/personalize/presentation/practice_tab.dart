@@ -53,8 +53,15 @@ class PracticeTabState extends State<PracticeTab> {
         if (!mounted) return;
         setState(() => _onboarded = completed);
       }
-    } catch (_) {
-      // Mất mạng: giữ nguyên cờ cục bộ. Không ép làm lại quiz vì một lần gọi hỏng.
+    } catch (error) {
+      // Giữ nguyên cờ cục bộ: bắt học sinh làm lại quiz chỉ vì một lần gọi hỏng còn tệ hơn hiện
+      // nhầm màn hình một lúc.
+      //
+      // NHƯNG phải log ra. Bản trước nuốt im lặng bằng `catch (_) {}` với chú thích "mất mạng",
+      // trong khi nó bắt MỌI lỗi -- kể cả access token hết hạn. Lúc đó cờ cục bộ là false nên
+      // màn onboarding hiện lên và không bao giờ tự sửa, người dùng bị bắt làm lại quiz cho tới
+      // khi đăng nhập lại. Mất ba lượt lần mò mới ra nguyên nhân, mà chỉ cần một dòng này.
+      debugPrint('[PracticeTab] không kiểm được trạng thái quiz: $error');
     }
   }
 

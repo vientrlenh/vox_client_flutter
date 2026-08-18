@@ -61,6 +61,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   String? _name;
   List<ExamSchedule>? _upcomingExams;
+  /// true = lấy danh sách THẤT BẠI. Tách khỏi `_upcomingExams == null` (đang tải) và khỏi
+  /// danh sách rỗng (tải xong, thật sự không có ca nào) -- ba trạng thái, ba thông báo.
+  bool _examsFailed = false;
   PracticeDashboard? _dashboard;
   List<PracticeHistoryEntry>? _recentHistory;
 
@@ -70,16 +73,20 @@ class _HomeScreenState extends State<HomeScreen> {
     _repository.getProfile().then((p) {
       if (mounted) setState(() => _name = p.fullName ?? p.email);
     });
-    _examRepository.getIncompleteClassTests().then((exams) {
-      if (!mounted) return;
-      // Soonest deadline first; exams with no date at all sink to the bottom.
-      final sorted = [...exams]..sort(
-        (a, b) => (a.closeAt ?? a.openAt ?? DateTime(9999))
-            .compareTo(b.closeAt ?? b.openAt ?? DateTime(9999)),
-      );
-      setState(() => _upcomingExams = sorted);
+    // Lọc và sắp xếp đã làm trong HomeExamApi -- nơi đó biết đâu là giờ của CA và đâu là cửa
+    // sổ của KỲ, còn ở đây thì không.
+    _examRepository.getUpcomingExams().then((exams) {
+      if (mounted) {
+        setState(() {
+          _upcomingExams = exams;
+          _examsFailed = false;
+        });
+      }
     }).catchError((_) {
-      if (mounted) setState(() => _upcomingExams = []);
+      // Trước đây nuốt lỗi rồi gán [] -- ba tình huống khác hẳn nhau (không có ca nào, mất
+      // mạng, server lỗi) cùng cho ra một màn hình trống y hệt, không ai phân biệt nổi. Giữ
+      // danh sách null và bật cờ để chỗ hiển thị nói đúng chuyện gì đã xảy ra.
+      if (mounted) setState(() => _examsFailed = true);
     });
     _personalizeRepository.getDashboard().then((d) {
       if (mounted) setState(() => _dashboard = d);
@@ -151,6 +158,16 @@ class _HomeScreenState extends State<HomeScreen> {
 
   List<Widget> _buildExamSection(AppLocalizations l10n) {
     final exams = _upcomingExams;
+    // Lỗi xét TRƯỚC trạng thái đang tải: khi hỏng thì `_upcomingExams` vẫn là null, để nguyên
+    // thứ tự cũ sẽ quay vòng tròn mãi mãi và người dùng tưởng mạng chậm.
+    if (_examsFailed) {
+      return [
+        Text(
+          l10n.homeExamsLoadFailed,
+          style: const TextStyle(fontSize: 13, color: AppColors.textFaint),
+        ),
+      ];
+    }
     if (exams == null) {
       return const [
         Padding(

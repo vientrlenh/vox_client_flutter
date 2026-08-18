@@ -2,10 +2,16 @@ import 'package:dio/dio.dart';
 
 import '../storage/secure_storage.dart';
 import 'api_endpoints.dart';
+import 'auth_interceptor.dart';
+import 'session_cookies.dart';
+import 'token_refresher.dart';
 
 class GraphQLException implements Exception {
   final String message;
-  GraphQLException(this.message);
+  // extensions.code do BE gắn cho một số lỗi (vd PLAN_LIMIT_EXCEEDED) để phân biệt được với các
+  // lỗi BAD_REQUEST khác mà không phải so khớp chuỗi message tiếng Việt -- xem GlobalExceptionResolver.
+  final String? code;
+  GraphQLException(this.message, {this.code});
 
   @override
   String toString() => message;
@@ -30,25 +36,22 @@ class GraphQLClient {
                 responseType: ResponseType.json,
               ),
             ) {
-    _dio.interceptors.add(
-      InterceptorsWrapper(
-        onRequest: (options, handler) async {
-          final token = await _secureStorage.getAccessToken();
-          if (token != null && token.isNotEmpty) {
-            options.headers['Authorization'] = 'Bearer $token';
-          }
-          handler.next(options);
-        },
-      ),
-    );
+    // Thứ tự QUAN TRỌNG: cookie trước, xác thực sau. Interceptor xác thực có thể gọi
+    // /auth/refresh, mà lời gọi đó cần cookie refresh token đã được nạp sẵn.
+    _dio.interceptors.add(SessionCookies.lazyInterceptor());
+    // Trước 2026-08-11 chỗ này chỉ gắn Bearer token, không có nhánh lỗi nào. Access token sống
+    // 15 phút nên hết hạn là mọi query hỏng cho tới khi người dùng tự đăng xuất/đăng nhập lại.
+    _dio.interceptors.add(AuthInterceptor(storage: _secureStorage));
   }
 
   final SecureStorage _secureStorage;
   final Dio _dio;
 
+  /// [retried] chỉ dùng nội bộ cho lần gọi lại sau khi làm mới token -- nơi khác đừng truyền.
   Future<Map<String, dynamic>> query(
     String query, {
     Map<String, dynamic>? variables,
+    bool retried = false,
   }) async {
     final response = await _dio.post('/graphql', data: {
       'query': query,
@@ -57,9 +60,45 @@ class GraphQLClient {
 
     final errors = response.data['errors'];
     if (errors != null) {
-      throw GraphQLException(errors[0]['message'] as String);
+      // Token hết hạn -> làm mới rồi gửi lại ĐÚNG query này.
+      //
+      // Phải xử lý ở ĐÂY chứ không phải trong AuthInterceptor: GraphQL trả lỗi trong BODY với
+      // HTTP 200 (đúng chuẩn của nó), nên `onError` của Dio không bao giờ chạy. Đo trên chính
+      // backend này: `/api/**` với token hỏng trả 401, còn `/graphql` trả 200 kèm
+      // `extensions.classification = "UNAUTHORIZED"`. Mà gần như toàn bộ app đi qua GraphQL --
+      // chỉ đăng nhập/đăng xuất dùng REST -- nên interceptor một mình là vô tác dụng.
+      if (!retried && _isUnauthorized(errors)) {
+        if (await TokenRefresher.refresh()) {
+          return this.query(query, variables: variables, retried: true);
+        }
+        // Refresh cũng hỏng nghĩa là phiên chết hẳn: dọn sạch để lần sau không thử lại bằng
+        // một token đã vô hiệu.
+        await TokenRefresher.clearSession();
+      }
+      // extensions.code đi kèm ngoại lệ để nơi gọi phân biệt được lỗi nghiệp vụ (vd
+      // PLAN_LIMIT_EXCEEDED) mà không phải so khớp chuỗi tiếng Việt.
+      final firstError = errors[0] as Map<String, dynamic>;
+      final extensions = firstError['extensions'] as Map<String, dynamic>?;
+      throw GraphQLException(
+        firstError['message'] as String,
+        code: extensions?['code'] as String?,
+      );
     }
 
     return response.data['data'] as Map<String, dynamic>;
+  }
+
+  /// Dựa vào `extensions.classification`, KHÔNG so chuỗi `message`.
+  ///
+  /// `message` là câu chữ cho người đọc ("Access Denied") -- đổi lúc nào cũng được và không có
+  /// gì đảm bảo. `classification` mới là phần hợp đồng dành cho máy.
+  bool _isUnauthorized(dynamic errors) {
+    if (errors is! List) return false;
+    return errors.any((error) {
+      final extensions = (error is Map) ? error['extensions'] : null;
+      final classification =
+          (extensions is Map) ? extensions['classification'] : null;
+      return classification == 'UNAUTHORIZED';
+    });
   }
 }

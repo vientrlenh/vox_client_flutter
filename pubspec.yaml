@@ -8,6 +8,12 @@ environment:
 
 dependencies:
   dio: ^5.9.2
+  # Giữ cookie cho Dio. Refresh token của backend CHỈ đi ra bằng Set-Cookie (httpOnly) và
+  # /api/v1/auth/refresh đòi đúng cookie đó -- không có hai gói này thì Dio bỏ qua Set-Cookie
+  # và mobile không bao giờ làm mới được phiên. httpOnly/sameSite là khái niệm của trình duyệt,
+  # không cản cookie jar native.
+  cookie_jar: ^4.0.8
+  dio_cookie_manager: ^3.1.1
   flutter:
     sdk: flutter
   flutter_localizations:

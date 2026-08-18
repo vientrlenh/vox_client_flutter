@@ -156,7 +156,44 @@ class _HistoryEntryRow extends StatelessWidget {
                   ],
                 ),
               ),
-              if (score != null) ...[
+              // Còn câu chưa chấm -> KHÔNG hiện số.
+              //
+              // overallScore lúc này chỉ gộp những câu đã chấm xong, nên nó là một con số đúng
+              // về mặt kỹ thuật mà sai về mặt ý nghĩa: hiện 72 rồi vài chục giây sau thành 76.
+              // Màn chi tiết đã chọn giấu điểm khi còn chờ; danh sách hiện số là để hai màn
+              // hình nói ngược nhau về cùng một phiên -- đúng thứ người dùng đã gặp.
+              if (!entry.scoreIsFinal) ...[
+                const SizedBox(width: 10),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.fieldBg,
+                    borderRadius: BorderRadius.circular(99),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SizedBox(
+                        width: 10,
+                        height: 10,
+                        child: CircularProgressIndicator(strokeWidth: 1.6),
+                      ),
+                      SizedBox(width: 6),
+                      Text(
+                        'Đang chấm',
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textGhost,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ] else if (score != null) ...[
                 const SizedBox(width: 10),
                 Container(
                   padding: const EdgeInsets.symmetric(

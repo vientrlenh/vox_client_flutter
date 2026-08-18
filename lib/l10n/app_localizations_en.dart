@@ -105,6 +105,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeNoExamsLeft => 'No exams left to complete';
 
   @override
+  String get homeExamsLoadFailed =>
+      'Could not load your exam schedule. Check your connection and try again.';
+
+  @override
   String get homeNoDateSet => 'No date set';
 
   @override
@@ -414,6 +418,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pzLoadError => 'Could not load personalized practice.';
 
   @override
+  String get pzPlanLimitExceeded =>
+      'Your school does not have an active plan. Please contact your school to continue AI practice.';
+
+  @override
   String get pzSeeAll => 'See all';
 
   @override
@@ -568,6 +576,17 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get pzSessionMicBusy =>
       'The microphone is in use by another app (Google Meet, Zoom…). Close it, then tap Retry.';
+
+  @override
+  String get pzSessionMicSilenced =>
+      'Another app (Google Meet, Zalo…) is holding the microphone, so your voice is NOT being recorded. Leave that app, then tap Retry.';
+
+  @override
+  String get pzSessionMicClaim => 'Take microphone';
+
+  @override
+  String get pzSessionMicClaimFailed =>
+      'Still could not take the microphone. Android lets only ONE app capture during a call -- mute your mic in Google Meet (or leave the call) and this banner will clear itself.';
 
   @override
   String get pzSessionMicRetry => 'Retry';

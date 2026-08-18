@@ -3,6 +3,7 @@ import 'dart:convert';
 import '../../../core/network/graphql_client.dart';
 import '../../profile/data/profile_api.dart';
 import 'models/practice_band_option.dart';
+import 'models/practice_framework_option.dart';
 import 'models/onboarding_question.dart';
 import 'models/practice_dashboard.dart';
 import 'models/practice_history_entry.dart';
@@ -301,12 +302,23 @@ class PersonalizeRepository {
   /// Thay cho `getLearnerBand()` cũ. Hệ thống không còn ước lượng "bậc của em" từ lịch sử
   /// chấm nữa — học sinh tự chọn độ khó muốn luyện, mỗi phiên chọn lại.
   Future<({List<PracticeBandOption> options, String? defaultCode})>
-      getPracticeBandOptions() => _api.getPracticeBandOptions();
+      getPracticeBandOptions({String? frameworkVersionId}) =>
+          _api.getPracticeBandOptions(frameworkVersionId: frameworkVersionId);
+
+  /// Các khung đánh giá còn hiệu lực. Gọi trước [getPracticeBandOptions].
+  Future<List<PracticeFrameworkOption>> getPracticeFrameworkOptions() =>
+      _api.getPracticeFrameworkOptions();
 
   /// Maps to `interestQuizItems` — real AI-generated forced-choice triplets,
   /// NOT `PersonalizeDemoData` (this is the cold-start interest inventory).
   Future<List<InterestQuizItem>> getInterestQuizItems() async {
     final items = await _api.getInterestQuizItems();
+    return items.map(InterestQuizItem.fromJson).toList();
+  }
+
+  /// Maps to `regenerateInterestQuiz` — lối "làm lại onboarding" ở màn Hồ sơ.
+  Future<List<InterestQuizItem>> regenerateInterestQuizItems() async {
+    final items = await _api.regenerateInterestQuizItems();
     return items.map(InterestQuizItem.fromJson).toList();
   }
 
@@ -404,6 +416,7 @@ class PersonalizeRepository {
       mispronounced: mispronouncedRows,
       pendingEvaluations:
           (detail['pendingEvaluationCount'] as num?)?.toInt() ?? 0,
+      gradingGaveUp: (detail['gradingGaveUpCount'] as num?)?.toInt() ?? 0,
       difficultyRank: (detail['difficultyRank'] as num?)?.toDouble(),
     );
   }

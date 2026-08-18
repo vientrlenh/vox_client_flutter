@@ -290,6 +290,12 @@ abstract class AppLocalizations {
   /// **'No exams left to complete'**
   String get homeNoExamsLeft;
 
+  /// No description provided for @homeExamsLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load your exam schedule. Check your connection and try again.'**
+  String get homeExamsLoadFailed;
+
   /// No description provided for @homeNoDateSet.
   ///
   /// In en, this message translates to:
@@ -848,6 +854,12 @@ abstract class AppLocalizations {
   /// **'Could not load personalized practice.'**
   String get pzLoadError;
 
+  /// No description provided for @pzPlanLimitExceeded.
+  ///
+  /// In en, this message translates to:
+  /// **'Your school does not have an active plan. Please contact your school to continue AI practice.'**
+  String get pzPlanLimitExceeded;
+
   /// No description provided for @pzSeeAll.
   ///
   /// In en, this message translates to:
@@ -1123,6 +1135,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The microphone is in use by another app (Google Meet, Zoom…). Close it, then tap Retry.'**
   String get pzSessionMicBusy;
+
+  /// No description provided for @pzSessionMicSilenced.
+  ///
+  /// In en, this message translates to:
+  /// **'Another app (Google Meet, Zalo…) is holding the microphone, so your voice is NOT being recorded. Leave that app, then tap Retry.'**
+  String get pzSessionMicSilenced;
+
+  /// No description provided for @pzSessionMicClaim.
+  ///
+  /// In en, this message translates to:
+  /// **'Take microphone'**
+  String get pzSessionMicClaim;
+
+  /// No description provided for @pzSessionMicClaimFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Still could not take the microphone. Android lets only ONE app capture during a call -- mute your mic in Google Meet (or leave the call) and this banner will clear itself.'**
+  String get pzSessionMicClaimFailed;
 
   /// No description provided for @pzSessionMicRetry.
   ///
