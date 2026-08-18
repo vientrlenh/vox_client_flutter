@@ -213,6 +213,7 @@
   "pzPreparingQuestions": "Đang chuẩn bị câu hỏi riêng cho chủ đề này…\nMất khoảng 10-20 giây cho lần đầu.",
   "pzRetry": "Thử lại",
   "pzLoadError": "Không thể tải phần ôn luyện cá nhân hoá.",
+  "pzPlanLimitExceeded": "Trường bạn chưa có gói đang hoạt động, vui lòng liên hệ nhà trường để tiếp tục luyện tập AI.",
   "pzSeeAll": "Tất cả",
   "pzMinutes": "{count} phút",
   "@pzMinutes": {

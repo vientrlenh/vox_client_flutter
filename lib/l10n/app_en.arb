@@ -213,6 +213,7 @@
   "pzPreparingQuestions": "Preparing questions for this topic…\nThis takes about 10-20 seconds the first time.",
   "pzRetry": "Retry",
   "pzLoadError": "Could not load personalized practice.",
+  "pzPlanLimitExceeded": "Your school does not have an active plan. Please contact your school to continue AI practice.",
   "pzSeeAll": "See all",
   "pzMinutes": "{count} min",
   "@pzMinutes": {

@@ -8,7 +8,10 @@ import 'token_refresher.dart';
 
 class GraphQLException implements Exception {
   final String message;
-  GraphQLException(this.message);
+  // extensions.code do BE gắn cho một số lỗi (vd PLAN_LIMIT_EXCEEDED) để phân biệt được với các
+  // lỗi BAD_REQUEST khác mà không phải so khớp chuỗi message tiếng Việt -- xem GlobalExceptionResolver.
+  final String? code;
+  GraphQLException(this.message, {this.code});
 
   @override
   String toString() => message;
@@ -72,7 +75,14 @@ class GraphQLClient {
         // một token đã vô hiệu.
         await TokenRefresher.clearSession();
       }
-      throw GraphQLException(errors[0]['message'] as String);
+      // extensions.code đi kèm ngoại lệ để nơi gọi phân biệt được lỗi nghiệp vụ (vd
+      // PLAN_LIMIT_EXCEEDED) mà không phải so khớp chuỗi tiếng Việt.
+      final firstError = errors[0] as Map<String, dynamic>;
+      final extensions = firstError['extensions'] as Map<String, dynamic>?;
+      throw GraphQLException(
+        firstError['message'] as String,
+        code: extensions?['code'] as String?,
+      );
     }
 
     return response.data['data'] as Map<String, dynamic>;

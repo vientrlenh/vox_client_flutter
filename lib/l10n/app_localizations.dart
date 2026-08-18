@@ -854,6 +854,12 @@ abstract class AppLocalizations {
   /// **'Could not load personalized practice.'**
   String get pzLoadError;
 
+  /// No description provided for @pzPlanLimitExceeded.
+  ///
+  /// In en, this message translates to:
+  /// **'Your school does not have an active plan. Please contact your school to continue AI practice.'**
+  String get pzPlanLimitExceeded;
+
   /// No description provided for @pzSeeAll.
   ///
   /// In en, this message translates to:
