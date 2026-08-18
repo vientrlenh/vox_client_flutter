@@ -5,7 +5,10 @@ import 'api_endpoints.dart';
 
 class GraphQLException implements Exception {
   final String message;
-  GraphQLException(this.message);
+  // extensions.code do BE gắn cho một số lỗi (vd PLAN_LIMIT_EXCEEDED) để phân biệt được với các
+  // lỗi BAD_REQUEST khác mà không phải so khớp chuỗi message tiếng Việt -- xem GlobalExceptionResolver.
+  final String? code;
+  GraphQLException(this.message, {this.code});
 
   @override
   String toString() => message;
@@ -57,7 +60,12 @@ class GraphQLClient {
 
     final errors = response.data['errors'];
     if (errors != null) {
-      throw GraphQLException(errors[0]['message'] as String);
+      final firstError = errors[0] as Map<String, dynamic>;
+      final extensions = firstError['extensions'] as Map<String, dynamic>?;
+      throw GraphQLException(
+        firstError['message'] as String,
+        code: extensions?['code'] as String?,
+      );
     }
 
     return response.data['data'] as Map<String, dynamic>;

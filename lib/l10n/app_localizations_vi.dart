@@ -414,6 +414,10 @@ class AppLocalizationsVi extends AppLocalizations {
   String get pzLoadError => 'Không thể tải phần ôn luyện cá nhân hoá.';
 
   @override
+  String get pzPlanLimitExceeded =>
+      'Trường bạn chưa có gói đang hoạt động, vui lòng liên hệ nhà trường để tiếp tục luyện tập AI.';
+
+  @override
   String get pzSeeAll => 'Tất cả';
 
   @override

@@ -414,6 +414,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pzLoadError => 'Could not load personalized practice.';
 
   @override
+  String get pzPlanLimitExceeded =>
+      'Your school does not have an active plan. Please contact your school to continue AI practice.';
+
+  @override
   String get pzSeeAll => 'See all';
 
   @override

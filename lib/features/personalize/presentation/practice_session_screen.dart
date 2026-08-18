@@ -7,6 +7,7 @@ import 'package:record/record.dart';
 
 import '../../../app/theme.dart';
 import '../../../app/widgets.dart';
+import '../../../core/network/graphql_client.dart';
 import '../../../l10n/app_localizations.dart';
 import '../data/models/practice_session.dart';
 import '../data/models/practice_topic.dart';
@@ -96,6 +97,10 @@ class _PracticeSessionScreenState extends State<PracticeSessionScreen>
   /// True khi backend báo PREPARING (đang nhờ AI sinh câu mới cho chủ đề này).
   bool _preparingQuestions = false;
   String? _error;
+
+  /// Trường hết gói subscription -- retry vô nghĩa với lỗi này (khác mọi lỗi tải khác ở [_error]),
+  /// nên tách cờ riêng để không hiện nút "Thử lại".
+  bool _planLimitExceeded = false;
 
   /// Lỗi MỞ MICRO -- tách khỏi [_error] có chủ đích.
   ///
@@ -344,6 +349,7 @@ class _PracticeSessionScreenState extends State<PracticeSessionScreen>
     setState(() {
       _loading = true;
       _error = null;
+      _planLimitExceeded = false;
     });
     try {
       await _initTts();
@@ -398,7 +404,10 @@ class _PracticeSessionScreenState extends State<PracticeSessionScreen>
       _startClock();
     } catch (e) {
       if (!mounted) return;
-      setState(() => _error = '$e');
+      setState(() {
+        _error = '$e';
+        _planLimitExceeded = e is GraphQLException && e.code == 'PLAN_LIMIT_EXCEEDED';
+      });
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -1085,6 +1094,29 @@ class _PracticeSessionScreenState extends State<PracticeSessionScreen>
               ),
             ],
           ],
+        ),
+      );
+    }
+    if (_planLimitExceeded) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.lock_outline, size: 32, color: AppColors.textFaint),
+              const SizedBox(height: 12),
+              Text(
+                l10n.pzPlanLimitExceeded,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: AppColors.textFaint,
+                ),
+              ),
+              // Không có nút "Thử lại": lỗi này chỉ hết khi nhà trường gia hạn gói, bấm lại vô ích.
+            ],
+          ),
         ),
       );
     }
