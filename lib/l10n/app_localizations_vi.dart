@@ -422,6 +422,10 @@ class AppLocalizationsVi extends AppLocalizations {
       'Trường bạn chưa có gói đang hoạt động, vui lòng liên hệ nhà trường để tiếp tục luyện tập AI.';
 
   @override
+  String get pzPracticeQuotaExceeded =>
+      'Hạn mức luyện tập của trường đã hết, vui lòng báo nhà trường để tiếp tục.';
+
+  @override
   String get pzSeeAll => 'Tất cả';
 
   @override
@@ -623,6 +627,14 @@ class AppLocalizationsVi extends AppLocalizations {
   @override
   String get pzSessionEndedQuotaExceeded =>
       'Bạn đã dùng hết hạn mức luyện tập. Buổi luyện đã kết thúc.';
+
+  @override
+  String get pzSessionEndedQuotaExceededSchool =>
+      'Trường bạn đã dùng hết hạn mức luyện tập chung. Buổi luyện đã kết thúc, vui lòng báo nhà trường.';
+
+  @override
+  String get pzSessionEndedQuotaExceededPersonal =>
+      'Bạn đã dùng hết phần hạn mức cá nhân được trường cấp riêng. Buổi luyện đã kết thúc, vui lòng báo giáo viên/nhà trường.';
 
   @override
   String get pzSessionReconnectFailed =>

@@ -103,6 +103,10 @@ class _PracticeSessionScreenState extends State<PracticeSessionScreen>
   /// nên tách cờ riêng để không hiện nút "Thử lại".
   bool _planLimitExceeded = false;
 
+  /// Dựng đề thất bại vì hết hạn mức PRACTICE (errorCode=QUOTA_EXCEEDED) -- cùng lý do tách khỏi
+  /// [_planLimitExceeded]: hạn mức không tự đầy lại nên nút "Thử lại" vô nghĩa với lỗi này.
+  bool _practiceQuotaExceeded = false;
+
   /// Lỗi MỞ MICRO -- tách khỏi [_error] có chủ đích.
   ///
   /// [_error] làm cả màn hình thành trang lỗi; nhưng mic hỏng thì phiên vẫn sống, WebSocket vẫn
@@ -369,6 +373,7 @@ class _PracticeSessionScreenState extends State<PracticeSessionScreen>
       _loading = true;
       _error = null;
       _planLimitExceeded = false;
+      _practiceQuotaExceeded = false;
     });
     try {
       await _initTts();
@@ -426,6 +431,7 @@ class _PracticeSessionScreenState extends State<PracticeSessionScreen>
       setState(() {
         _error = '$e';
         _planLimitExceeded = e is GraphQLException && e.code == 'PLAN_LIMIT_EXCEEDED';
+        _practiceQuotaExceeded = e is PracticeQuotaExceededException;
       });
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -643,7 +649,7 @@ class _PracticeSessionScreenState extends State<PracticeSessionScreen>
       case 'resume_ack':
         _handleResumeAck(event);
       case 'practice_session_ended':
-        _handleSessionEndedByServer(event['reason'] as String?);
+        _handleSessionEndedByServer(event['reason'] as String?, event['scope'] as String?);
       case 'connection_closed':
         _handleConnectionDropped();
       case 'error':
@@ -950,7 +956,7 @@ class _PracticeSessionScreenState extends State<PracticeSessionScreen>
 
   bool get _continueReady => _pendingPromptText != null;
 
-  void _handleSessionEndedByServer(String? reason) {
+  void _handleSessionEndedByServer(String? reason, String? scope) {
     _turnTimer?.cancel();
     _tts.stop();
     _audioStreamSub?.cancel();
@@ -962,7 +968,15 @@ class _PracticeSessionScreenState extends State<PracticeSessionScreen>
     // instead of leaving them guessing.
     final l10n = AppLocalizations.of(context)!;
     if (reason == 'quota_exceeded') {
-      _toast(l10n.pzSessionEndedQuotaExceeded);
+      // scope=null: server cũ chưa gửi field này -- giữ câu chung làm phương án dự phòng.
+      switch (scope) {
+        case 'SCHOOL':
+          _toast(l10n.pzSessionEndedQuotaExceededSchool);
+        case 'PERSONAL':
+          _toast(l10n.pzSessionEndedQuotaExceededPersonal);
+        default:
+          _toast(l10n.pzSessionEndedQuotaExceeded);
+      }
     } else if (reason == 'failed') {
       _toast(l10n.pzSessionTurnSaveFailed);
     }
@@ -1322,6 +1336,29 @@ class _PracticeSessionScreenState extends State<PracticeSessionScreen>
                 ),
               ),
               // Không có nút "Thử lại": lỗi này chỉ hết khi nhà trường gia hạn gói, bấm lại vô ích.
+            ],
+          ),
+        ),
+      );
+    }
+    if (_practiceQuotaExceeded) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.lock_outline, size: 32, color: AppColors.textFaint),
+              const SizedBox(height: 12),
+              Text(
+                l10n.pzPracticeQuotaExceeded,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: AppColors.textFaint,
+                ),
+              ),
+              // Không có nút "Thử lại": hạn mức không tự đầy lại, bấm lại chắc chắn lỗi y hệt.
             ],
           ),
         ),
