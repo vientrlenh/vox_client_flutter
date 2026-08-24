@@ -422,6 +422,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Your school does not have an active plan. Please contact your school to continue AI practice.';
 
   @override
+  String get pzPracticeQuotaExceeded =>
+      'Your school\'s practice quota has run out. Please contact your school to continue.';
+
+  @override
   String get pzSeeAll => 'See all';
 
   @override
@@ -625,6 +629,14 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get pzSessionEndedQuotaExceeded =>
       'You\'ve used up your practice quota. The session has ended.';
+
+  @override
+  String get pzSessionEndedQuotaExceededSchool =>
+      'Your school has used up its shared practice quota. The session has ended, please notify your school.';
+
+  @override
+  String get pzSessionEndedQuotaExceededPersonal =>
+      'You\'ve used up the personal quota your school allocated you. The session has ended, please notify your teacher or school.';
 
   @override
   String get pzSessionReconnectFailed =>

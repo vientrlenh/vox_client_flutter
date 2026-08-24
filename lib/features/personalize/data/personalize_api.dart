@@ -166,6 +166,7 @@ class PersonalizeApi {
     draftId
     status
     reason
+    errorCode
     paper {
       id
       topicId

@@ -214,6 +214,7 @@
   "pzRetry": "Thử lại",
   "pzLoadError": "Không thể tải phần ôn luyện cá nhân hoá.",
   "pzPlanLimitExceeded": "Trường bạn chưa có gói đang hoạt động, vui lòng liên hệ nhà trường để tiếp tục luyện tập AI.",
+  "pzPracticeQuotaExceeded": "Hạn mức luyện tập của trường đã hết, vui lòng báo nhà trường để tiếp tục.",
   "pzSeeAll": "Tất cả",
   "pzMinutes": "{count} phút",
   "@pzMinutes": {
@@ -320,6 +321,8 @@
   "pzSessionNoSampleAudio": "Chưa có audio mẫu cho câu này.",
   "pzSessionTurnSaveFailed": "Không lưu được lượt trả lời vừa rồi. Vui lòng thử lại.",
   "pzSessionEndedQuotaExceeded": "Bạn đã dùng hết hạn mức luyện tập. Buổi luyện đã kết thúc.",
+  "pzSessionEndedQuotaExceededSchool": "Trường bạn đã dùng hết hạn mức luyện tập chung. Buổi luyện đã kết thúc, vui lòng báo nhà trường.",
+  "pzSessionEndedQuotaExceededPersonal": "Bạn đã dùng hết phần hạn mức cá nhân được trường cấp riêng. Buổi luyện đã kết thúc, vui lòng báo giáo viên/nhà trường.",
   "pzSessionReconnectFailed": "Mất kết nối và không thể kết nối lại. Buổi luyện đã kết thúc.",
   "pzSummaryTitle": "Tổng kết buổi nói",
   "pzSummaryHeader": "{topic} · {minutes} PHÚT",

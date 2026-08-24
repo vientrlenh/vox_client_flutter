@@ -12,6 +12,19 @@ import 'models/practice_topic.dart';
 import 'models/session_summary.dart';
 import 'personalize_api.dart';
 
+/// Thrown when dựng đề thất bại vì hết hạn mức PRACTICE (errorCode=QUOTA_EXCEEDED).
+///
+/// Type riêng biệt với `Exception` thường: hạn mức không tự đầy lại nên bấm lại chắc chắn
+/// lỗi y hệt -- UI phải ẩn nút "Thử lại" cho lỗi này, khác lỗi tạm thời (mất mạng, AI sinh lỗi).
+class PracticeQuotaExceededException implements Exception {
+  PracticeQuotaExceededException(this.message);
+
+  final String message;
+
+  @override
+  String toString() => message;
+}
+
 /// Data source for the personalized-practice feature.
 ///
 /// Every method here is either a real GraphQL call or a documented
@@ -251,7 +264,7 @@ class PersonalizeRepository {
       return draft['paper'] as Map<String, dynamic>;
     }
     if (draft['status'] == 'FAILED') {
-      throw Exception(draft['reason'] ?? 'Không dựng được đề luyện.');
+      _throwDraftFailure(draft);
     }
 
     onPreparing?.call();
@@ -264,10 +277,20 @@ class PersonalizeRepository {
         return draft['paper'] as Map<String, dynamic>;
       }
       if (draft['status'] == 'FAILED') {
-        throw Exception(draft['reason'] ?? 'Không dựng được đề luyện.');
+        _throwDraftFailure(draft);
       }
     }
     throw Exception('Chuẩn bị câu hỏi lâu hơn dự kiến, vui lòng thử lại.');
+  }
+
+  /// draft['errorCode'] == 'QUOTA_EXCEEDED' ném type riêng (không cho Thử lại); các lỗi FAILED
+  /// khác (chủ đề chưa có câu, AI sinh lỗi...) giữ nguyên Exception thường (còn đáng thử lại).
+  Never _throwDraftFailure(Map<String, dynamic> draft) {
+    final reason = draft['reason'] as String? ?? 'Không dựng được đề luyện.';
+    if (draft['errorCode'] == 'QUOTA_EXCEEDED') {
+      throw PracticeQuotaExceededException(reason);
+    }
+    throw Exception(reason);
   }
 
   /// Maps to `endPracticeSession` — called AFTER the WS practice_end/practice_end_ack
