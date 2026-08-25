@@ -214,6 +214,7 @@
   "pzRetry": "Retry",
   "pzLoadError": "Could not load personalized practice.",
   "pzPlanLimitExceeded": "Your school does not have an active plan. Please contact your school to continue AI practice.",
+  "pzPracticeQuotaExceeded": "Your school's practice quota has run out. Please contact your school to continue.",
   "pzSeeAll": "See all",
   "pzMinutes": "{count} min",
   "@pzMinutes": {
@@ -320,6 +321,8 @@
   "pzSessionNoSampleAudio": "No model audio for this sentence yet.",
   "pzSessionTurnSaveFailed": "Your last turn couldn't be saved. Please try again.",
   "pzSessionEndedQuotaExceeded": "You've used up your practice quota. The session has ended.",
+  "pzSessionEndedQuotaExceededSchool": "Your school has used up its shared practice quota. The session has ended, please notify your school.",
+  "pzSessionEndedQuotaExceededPersonal": "You've used up the personal quota your school allocated you. The session has ended, please notify your teacher or school.",
   "pzSessionReconnectFailed": "Connection lost and couldn't be restored. The session has ended.",
   "pzSummaryTitle": "Session summary",
   "pzSummaryHeader": "{topic} · {minutes} MIN",

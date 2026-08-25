@@ -860,6 +860,12 @@ abstract class AppLocalizations {
   /// **'Your school does not have an active plan. Please contact your school to continue AI practice.'**
   String get pzPlanLimitExceeded;
 
+  /// No description provided for @pzPracticeQuotaExceeded.
+  ///
+  /// In en, this message translates to:
+  /// **'Your school's practice quota has run out. Please contact your school to continue.'**
+  String get pzPracticeQuotaExceeded;
+
   /// No description provided for @pzSeeAll.
   ///
   /// In en, this message translates to:
@@ -1219,6 +1225,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'You\'ve used up your practice quota. The session has ended.'**
   String get pzSessionEndedQuotaExceeded;
+
+  /// No description provided for @pzSessionEndedQuotaExceededSchool.
+  ///
+  /// In en, this message translates to:
+  /// **'Your school has used up its shared practice quota. The session has ended, please notify your school.'**
+  String get pzSessionEndedQuotaExceededSchool;
+
+  /// No description provided for @pzSessionEndedQuotaExceededPersonal.
+  ///
+  /// In en, this message translates to:
+  /// **'You've used up the personal quota your school allocated you. The session has ended, please notify your teacher or school.'**
+  String get pzSessionEndedQuotaExceededPersonal;
 
   /// No description provided for @pzSessionReconnectFailed.
   ///
