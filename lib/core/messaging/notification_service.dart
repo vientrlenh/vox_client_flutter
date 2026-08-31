@@ -1,7 +1,10 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 import '../../app/router.dart';
+import '../../features/notifications/presentation/notification_destination.dart';
 import '../../features/notifications/presentation/notifications_screen.dart';
 import '../storage/preference_storage.dart';
 
@@ -22,7 +25,8 @@ class NotificationService {
         iOS: iosInit,
         linux: linuxInit,
       ),
-      onDidReceiveNotificationResponse: (_) => openNotifications(),
+      onDidReceiveNotificationResponse: (response) =>
+          openFromPush(decodePayload(response.payload)),
     );
     await _plugin
         .resolvePlatformSpecificImplementation<
@@ -33,20 +37,49 @@ class NotificationService {
   /// Điểm vào chung khi người dùng bấm vào một thông báo, dù là khay cục bộ hay
   /// khay hệ thống của FCM.
   ///
-  /// Không nhận id: payload của push mang `eventType` và khoá điều hướng của
-  /// thực thể (candidateResultId, appealId...), KHÔNG mang id dòng notification,
-  /// nên không có gì để mở đúng một mục. Mở thẳng danh sách là thứ trung thực nhất.
+  /// Push mang `target` cùng các khoá điều hướng, nên ở đây dựng được đúng màn hình
+  /// thay vì chỉ mở danh sách như trước. Không dựng được thì mở danh sách: thông báo
+  /// vẫn đọc được đầy đủ ở đó, và đó là thứ trung thực nhất khi app này không có màn
+  /// hình tương ứng (các target dành cho quản trị viên chẳng hạn).
+  static void openFromPush(Map<String, String> payload) {
+    final navigator = AppRouter.navigatorKey.currentState;
+    if (navigator == null) return;
+
+    final destination = notificationDestination(payload) ?? const NotificationsScreen();
+    navigator.push(MaterialPageRoute(builder: (_) => destination));
+  }
+
+  /// Mở thẳng danh sách, không qua payload. Dùng cho chuông trên thanh tiêu đề.
   static void openNotifications() {
     AppRouter.navigatorKey.currentState?.push(
       MaterialPageRoute(builder: (_) => const NotificationsScreen()),
     );
   }
 
+  /// Payload của khay cục bộ là chuỗi JSON của chính `data` trong push.
+  ///
+  /// Hỏng hoặc rỗng thì trả map rỗng chứ không ném: người dùng vừa bấm vào một thông
+  /// báo có thật, và mở danh sách vẫn hơn hẳn việc không có gì xảy ra.
+  @visibleForTesting
+  static Map<String, String> decodePayload(String? raw) {
+    if (raw == null || raw.isEmpty) return const {};
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is! Map) return const {};
+      return {
+        for (final entry in decoded.entries)
+          if (entry.value != null) entry.key.toString(): entry.value.toString(),
+      };
+    } catch (_) {
+      return const {};
+    }
+  }
+
   /// Dựng khay cho push tới lúc app đang mở (foreground).
   static Future<void> show({
     required String title,
     required String body,
-    required String payload,
+    required Map<String, String> data,
   }) async {
     if (!await PreferenceStorage().getNotificationsEnabled()) return;
     const details = NotificationDetails(
@@ -61,7 +94,9 @@ class NotificationService {
       title: title,
       body: body,
       notificationDetails: details,
-      payload: payload,
+      // Cả map chứ không chỉ `eventType` như trước: đây là toàn bộ thứ còn lại lúc
+      // người dùng bấm vào khay, nên thiếu khoá nào là mất khả năng mở khoá đó.
+      payload: jsonEncode(data),
     );
   }
 }

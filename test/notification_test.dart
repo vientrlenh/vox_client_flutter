@@ -49,19 +49,20 @@ void main() {
       final notification = AppNotification.fromJson(_json(
         payload: jsonEncode({
           'eventType': 'ExamAppealApproved',
+          'target': 'EXAM_APPEAL_DETAIL',
           'appealId': 'a-9',
         }),
       ));
 
       expect(notification.payload['appealId'], 'a-9');
-      expect(notification.targetId, 'a-9');
+      expect(notification.target, NotificationTarget.examAppealDetail);
     });
 
     test('a broken payload costs the navigation key, not the whole row', () {
       final notification = AppNotification.fromJson(_json(payload: 'not json'));
 
       expect(notification.payload, isEmpty);
-      expect(notification.targetId, isNull);
+      expect(notification.target, isNull);
       expect(notification.title, 'Điểm thi của bạn đã có');
     });
 

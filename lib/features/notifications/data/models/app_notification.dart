@@ -9,8 +9,61 @@ import 'package:flutter/foundation.dart';
 /// tiêu đề/nội dung đã do server dựng sẵn nên không mất gì ngoài cái icon riêng.
 enum NotificationKind { examResult, appeal, grading, blueprint, invoice, account, other }
 
-/// Màn hình mà thông báo dẫn tới khi bấm vào.
-enum NotificationTarget { none, results, appeals }
+/// Màn hình mà server muốn client mở khi bấm vào thông báo.
+///
+/// Tên trên dây khớp enum `NotificationTarget` bên backend. Server chốt "mở cái gì",
+/// còn "mở màn hình nào của app này" là việc của [notificationDestination] --
+/// nhiều target trong đây không có màn hình tương ứng trên mobile (blueprint, hoá
+/// đơn, các trang quản trị) và đó là chuyện bình thường.
+///
+/// Trước đây target được suy ra từ [NotificationKind], tức là từ `eventType`. Cách
+/// đó không phân biệt được hai event dùng chung một khoá id nhưng gửi cho hai vai
+/// trò khác nhau, và mỗi client lại đoán một kiểu.
+enum NotificationTarget {
+  examResultDetail('EXAM_RESULT_DETAIL'),
+  examAppealDetail('EXAM_APPEAL_DETAIL'),
+  teacherGradingTask('TEACHER_GRADING_TASK'),
+  adminGradingAssignment('ADMIN_GRADING_ASSIGNMENT'),
+  schoolBlueprintDetail('SCHOOL_BLUEPRINT_DETAIL'),
+  schoolInvoiceDetail('SCHOOL_INVOICE_DETAIL'),
+  schoolBillingOverview('SCHOOL_BILLING_OVERVIEW'),
+  schoolSubscriptionDetail('SCHOOL_SUBSCRIPTION_DETAIL'),
+  systemSchoolAttention('SYSTEM_SCHOOL_ATTENTION');
+
+  const NotificationTarget(this.wireName);
+
+  /// Giá trị đúng như backend gửi trong `payload['target']`.
+  final String wireName;
+
+  /// `null` khi thiếu target (dòng ghi trước khi backend gửi khoá này) hoặc khi
+  /// backend đã thêm target mới mà bản app này chưa biết. Cả hai đều dẫn tới "không
+  /// bấm được", không bao giờ dẫn tới mở bừa một màn hình.
+  static NotificationTarget? parse(String? value) {
+    if (value == null) return null;
+    for (final target in NotificationTarget.values) {
+      if (target.wireName == value) return target;
+    }
+    return null;
+  }
+}
+
+/// Loại bài thi, quyết định mở màn hình kết quả nào.
+enum ExamKind {
+  centralized('CENTRALIZED'),
+  classTest('CLASS_TEST');
+
+  const ExamKind(this.wireName);
+
+  final String wireName;
+
+  static ExamKind? parse(String? value) {
+    if (value == null) return null;
+    for (final kind in ExamKind.values) {
+      if (kind.wireName == value) return kind;
+    }
+    return null;
+  }
+}
 
 /// Một dòng trong `myNotifications` (NotificationDto).
 @immutable
@@ -59,21 +112,8 @@ class AppNotification {
         _ => NotificationKind.other,
       };
 
-  /// Chỉ hai nhóm này có màn hình tương ứng trong app học sinh. Nhóm chấm bài,
-  /// blueprint và hoá đơn là việc của giáo viên/admin trên web, nên ở đây chỉ
-  /// hiển thị chứ không điều hướng đi đâu.
-  NotificationTarget get target => switch (kind) {
-        NotificationKind.examResult => NotificationTarget.results,
-        NotificationKind.appeal => NotificationTarget.appeals,
-        _ => NotificationTarget.none,
-      };
-
-  /// Khoá điều hướng đi kèm từng loại event: `candidateResultId` cho nhóm điểm,
-  /// `appealId` cho nhóm phúc khảo, `assignmentId` cho nhóm chấm bài.
-  String? get targetId =>
-      payload['candidateResultId'] ??
-      payload['appealId'] ??
-      payload['assignmentId'];
+  /// Màn hình server muốn mở, đọc thẳng từ payload thay vì suy từ `eventType`.
+  NotificationTarget? get target => NotificationTarget.parse(payload['target']);
 
   factory AppNotification.fromJson(Map<String, dynamic> json) {
     return AppNotification(
