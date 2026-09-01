@@ -33,8 +33,9 @@ Widget? notificationDestination(Map<String, String> payload) {
     NotificationTarget.examAppealDetail => _appealScreen(payload),
 
     // Chấm bài là việc của giáo viên trên web: app chỉ có danh sách kỳ thi, không có màn
-    // hình chấm từng bài.
+    // hình chấm từng bài, cũng không có hàng đợi chấm của cả bài thi.
     NotificationTarget.teacherGradingTask => null,
+    NotificationTarget.examHumanGradingRequired => null,
 
     // Bốn target dưới đây gửi cho school admin / system admin. App này chỉ dành cho học
     // sinh và giáo viên nên sẽ không bao giờ nhận, nhưng vẫn liệt kê đủ để `switch` không

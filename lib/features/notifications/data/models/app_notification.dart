@@ -23,6 +23,7 @@ enum NotificationTarget {
   examResultDetail('EXAM_RESULT_DETAIL'),
   examAppealDetail('EXAM_APPEAL_DETAIL'),
   teacherGradingTask('TEACHER_GRADING_TASK'),
+  examHumanGradingRequired('EXAM_HUMAN_GRADING_REQUIRED'),
   adminGradingAssignment('ADMIN_GRADING_ASSIGNMENT'),
   schoolBlueprintDetail('SCHOOL_BLUEPRINT_DETAIL'),
   schoolInvoiceDetail('SCHOOL_INVOICE_DETAIL'),
