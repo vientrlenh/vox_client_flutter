@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 
 import '../storage/secure_storage.dart';
 import 'notification_device_api.dart';
+import 'pending_push_navigation.dart';
 import 'notification_service.dart';
 import 'notification_signal.dart';
 
@@ -49,11 +50,18 @@ class PushMessagingService {
     FirebaseInstallations.instance.onIdChange.listen((_) => registerDevice());
 
     FirebaseMessaging.onMessage.listen(_onForegroundMessage);
-    FirebaseMessaging.onMessageOpenedApp
-        .listen((_) => NotificationService.openNotifications());
 
+    // App đang chạy nền: navigator đã tồn tại và người dùng đã đăng nhập, điều hướng
+    // được ngay.
+    FirebaseMessaging.onMessageOpenedApp
+        .listen((message) => NotificationService.openFromPush(_dataOf(message)));
+
+    // App đã tắt hẳn: hàm này chạy trong `main()`, TRƯỚC `runApp`, nên chưa có
+    // navigator để điều hướng và cũng chưa đăng nhập. Cất lại, MainShell tiêu thụ.
     final initialMessage = await FirebaseMessaging.instance.getInitialMessage();
-    if (initialMessage != null) NotificationService.openNotifications();
+    if (initialMessage != null) {
+      PendingPushNavigation.remember(_dataOf(initialMessage));
+    }
   }
 
   /// FID của bản cài đặt này, `null` nếu Firebase chưa sẵn sàng hoặc nền tảng
@@ -119,7 +127,13 @@ class PushMessagingService {
     NotificationService.show(
       title: title,
       body: message.notification?.body ?? '',
-      payload: message.data['eventType'] ?? '',
+      data: _dataOf(message),
     );
   }
+
+  /// `RemoteMessage.data` là `Map<String, dynamic>` dù FCM chỉ chở được chuỗi.
+  static Map<String, String> _dataOf(RemoteMessage message) => {
+        for (final entry in message.data.entries)
+          if (entry.value != null) entry.key: entry.value.toString(),
+      };
 }

@@ -6,9 +6,8 @@ import '../../../core/messaging/notification_signal.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/graphql_client.dart';
 import '../../../l10n/app_localizations.dart';
-import '../../appeal/presentation/appeals_screen.dart';
-import '../../result/presentation/results_list_screen.dart';
 import '../data/models/app_notification.dart';
+import 'notification_destination.dart';
 import '../data/notification_graphql_api.dart';
 import '../data/notification_repository.dart';
 import '../data/notification_rest_api.dart';
@@ -138,11 +137,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       _repository.markRead(notification.id).catchError((_) {});
     }
 
-    final page = switch (notification.target) {
-      NotificationTarget.results => const ResultsListScreen(),
-      NotificationTarget.appeals => const AppealsScreen(),
-      NotificationTarget.none => null,
-    };
+    // Cùng một bảng tra với luồng bấm từ khay thông báo, xem notification_destination.dart.
+    // Null nghĩa là app này không có màn hình cho target đó -- ở nguyên danh sách, nơi nội
+    // dung thông báo đã hiển thị đầy đủ.
+    final page = notificationDestination(notification.payload);
     if (page == null || !mounted) return;
     await Navigator.of(context).push(MaterialPageRoute(builder: (_) => page));
   }

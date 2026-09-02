@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../core/messaging/notification_service.dart';
+import '../core/messaging/pending_push_navigation.dart';
 import '../core/network/graphql_client.dart';
 import '../features/home/presentation/home_screen.dart';
 import '../features/personalize/presentation/practice_tab.dart';
@@ -26,6 +28,25 @@ class _MainShellState extends State<MainShell> {
   void initState() {
     super.initState();
     _loadRole();
+    _openPendingPush();
+  }
+
+  /// Người dùng mở app bằng cách bấm vào thông báo lúc app đã tắt hẳn.
+  ///
+  /// Tiêu thụ ở đây chứ không ở `main()`: lúc `getInitialMessage()` chạy thì chưa có
+  /// navigator và cũng chưa đăng nhập, mà mọi màn hình đích đều cần phiên. MainShell là
+  /// nơi đầu tiên chắc chắn có cả hai.
+  ///
+  /// `addPostFrameCallback` vì `push` cần navigator đã gắn xong cây widget — gọi thẳng
+  /// trong initState là đẩy vào một Navigator đang dựng dở.
+  void _openPendingPush() {
+    final pending = PendingPushNavigation.take();
+    if (pending == null) return;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      NotificationService.openFromPush(pending);
+    });
   }
 
   Future<void> _loadRole() async {
