@@ -863,7 +863,7 @@ abstract class AppLocalizations {
   /// No description provided for @pzPracticeQuotaExceeded.
   ///
   /// In en, this message translates to:
-  /// **'Your school's practice quota has run out. Please contact your school to continue.'**
+  /// **'Your school\'s practice quota has run out. Please contact your school to continue.'**
   String get pzPracticeQuotaExceeded;
 
   /// No description provided for @pzSeeAll.
@@ -1235,7 +1235,7 @@ abstract class AppLocalizations {
   /// No description provided for @pzSessionEndedQuotaExceededPersonal.
   ///
   /// In en, this message translates to:
-  /// **'You've used up the personal quota your school allocated you. The session has ended, please notify your teacher or school.'**
+  /// **'You\'ve used up the personal quota your school allocated you. The session has ended, please notify your teacher or school.'**
   String get pzSessionEndedQuotaExceededPersonal;
 
   /// No description provided for @pzSessionReconnectFailed.
