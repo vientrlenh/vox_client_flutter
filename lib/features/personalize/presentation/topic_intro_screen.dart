@@ -34,6 +34,7 @@ class _TopicIntroScreenState extends State<TopicIntroScreen> {
   String? _selectedFrameworkId;
   List<PracticeBandOption> _options = const [];
   String? _selectedId;
+  PracticeQuotaBlockReason _quotaBlockReason = PracticeQuotaBlockReason.none;
 
   @override
   void initState() {
@@ -64,11 +65,21 @@ class _TopicIntroScreenState extends State<TopicIntroScreen> {
       final result = await _repository.getPracticeBandOptions(
         frameworkVersionId: frameworkId,
       );
+      // Chặn theo hạn mức CÁ NHÂN ngay ở đây -- không để học sinh chọn xong bậc, bấm Bắt đầu,
+      // dựng đề rồi mới chết ở màn luyện tập. Nuốt lỗi giống khối frameworks phía trên: một
+      // lượt hỏi phụ trợ hỏng không nên làm sập cả màn chọn bậc.
+      PracticeQuotaBlockReason quotaBlockReason;
+      try {
+        quotaBlockReason = await _repository.checkPracticeQuotaBlock();
+      } catch (_) {
+        quotaBlockReason = PracticeQuotaBlockReason.none;
+      }
       if (!mounted) return;
       setState(() {
         _frameworks = frameworks;
         _selectedFrameworkId = frameworkId;
         _options = result.options;
+        _quotaBlockReason = quotaBlockReason;
         // Chọn sẵn bậc mục tiêu của trường -- điểm khởi đầu có cơ sở, không phải tuyên bố
         // "đây là trình độ của em". Học sinh đổi thoải mái.
         _selectedId = _options
@@ -118,6 +129,7 @@ class _TopicIntroScreenState extends State<TopicIntroScreen> {
                 const SizedBox(height: 12),
                 _frameworkPicker(),
                 const SizedBox(height: 16),
+                _quotaBlockBanner(),
                 _bandList(),
               ],
             ),
@@ -131,8 +143,10 @@ class _TopicIntroScreenState extends State<TopicIntroScreen> {
                 width: double.infinity,
                 child: FilledButton(
                   // Không có bậc nào chọn thì không cho bắt đầu: hệ thống không còn suy ra
-                  // bậc của học sinh nữa, nên không có giá trị nào đúng để điền thay em.
-                  onPressed: _selectedId == null
+                  // bậc của học sinh nữa, nên không có giá trị nào đúng để điền thay em. Bị
+                  // chặn hạn mức cá nhân thì cũng khoá nút luôn -- không để học sinh chọn bậc,
+                  // bấm Bắt đầu, dựng đề xong rồi mới chết ở màn luyện tập.
+                  onPressed: _selectedId == null || _quotaBlockReason != PracticeQuotaBlockReason.none
                       ? null
                       : () => Navigator.of(context).pop(
                             _options.firstWhere((option) => option.id == _selectedId),
@@ -218,6 +232,41 @@ class _TopicIntroScreenState extends State<TopicIntroScreen> {
     } finally {
       if (mounted) setState(() => _loading = false);
     }
+  }
+
+  /// Cảnh báo chặn theo hạn mức CÁ NHÂN -- không thay thế _bandList(): học sinh vẫn xem được
+  /// các bậc, chỉ nút "Bắt đầu" bị khoá (xem onPressed ở build()).
+  Widget _quotaBlockBanner() {
+    if (_loading || _quotaBlockReason == PracticeQuotaBlockReason.none) {
+      return const SizedBox.shrink();
+    }
+    final message = _quotaBlockReason == PracticeQuotaBlockReason.notAllocated
+        ? 'Trường chưa cấp hạn mức luyện tập cho em. Vui lòng liên hệ giáo viên hoặc nhà trường để được phân hạn mức.'
+        : 'Em đã dùng hết hạn mức luyện tập được trường cấp. Liên hệ nhà trường để được cấp thêm.';
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: AppColors.warning.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.warning.withValues(alpha: 0.3)),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Icon(Icons.lock_outline, size: 18, color: AppColors.warning),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                message,
+                style: const TextStyle(fontSize: 12.5, height: 1.4, color: AppColors.ink),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _bandList() {

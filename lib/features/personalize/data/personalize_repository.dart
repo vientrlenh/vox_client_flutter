@@ -25,6 +25,19 @@ class PracticeQuotaExceededException implements Exception {
   String toString() => message;
 }
 
+/// Lý do màn chọn bậc khoá nút "Bắt đầu" -- xem [PersonalizeRepository.checkPracticeQuotaBlock].
+enum PracticeQuotaBlockReason {
+  /// Luyện tập được bình thường.
+  none,
+
+  /// Trường chưa phân hạn mức PRACTICE riêng cho học sinh này (`myPracticeQuotaAllocation` trả
+  /// null). BE giờ coi đó là 0 quỹ khả dụng, không còn rơi về quỹ chung của trường.
+  notAllocated,
+
+  /// Có hạn mức riêng nhưng đã dùng hết (`usedAmountVnd >= allocatedAmountVnd`).
+  allocationExhausted,
+}
+
 /// Data source for the personalized-practice feature.
 ///
 /// Every method here is either a real GraphQL call or a documented
@@ -331,6 +344,18 @@ class PersonalizeRepository {
   /// Các khung đánh giá còn hiệu lực. Gọi trước [getPracticeBandOptions].
   Future<List<PracticeFrameworkOption>> getPracticeFrameworkOptions() =>
       _api.getPracticeFrameworkOptions();
+
+  /// Có luyện tập được không, xét theo hạn mức CÁ NHÂN -- không xét quỹ chung của trường (quỹ
+  /// chung đã có cửa chặn riêng ở buildPracticePaper, vẫn giữ nguyên). Gọi trước khi cho bấm
+  /// "Bắt đầu" ở màn chọn bậc.
+  Future<PracticeQuotaBlockReason> checkPracticeQuotaBlock() async {
+    final allocation = await _api.getMyPracticeQuotaAllocation();
+    if (allocation == null) return PracticeQuotaBlockReason.notAllocated;
+    final allocated = (allocation['allocatedAmountVnd'] as num?)?.toDouble() ?? 0;
+    final used = (allocation['usedAmountVnd'] as num?)?.toDouble() ?? 0;
+    if (allocated - used <= 0) return PracticeQuotaBlockReason.allocationExhausted;
+    return PracticeQuotaBlockReason.none;
+  }
 
   /// Maps to `interestQuizItems` — real AI-generated forced-choice triplets,
   /// NOT `PersonalizeDemoData` (this is the cold-start interest inventory).
