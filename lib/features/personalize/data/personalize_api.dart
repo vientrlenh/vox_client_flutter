@@ -381,6 +381,21 @@ class PersonalizeApi {
     );
   }
 
+  /// Maps to `myPracticeQuotaAllocation`. null = trường CHƯA phân hạn mức luyện tập riêng cho
+  /// học sinh này -- BE giờ coi đó là 0 quỹ khả dụng (xem findPracticeSpendableFundsVnd), nên
+  /// phải chặn ở đây thay vì để học sinh dựng đề xong mới chết.
+  Future<Map<String, dynamic>?> getMyPracticeQuotaAllocation() async {
+    final data = await _client.query('''
+      query MyPracticeQuotaAllocation {
+        myPracticeQuotaAllocation {
+          allocatedAmountVnd
+          usedAmountVnd
+        }
+      }
+    ''');
+    return data['myPracticeQuotaAllocation'] as Map<String, dynamic>?;
+  }
+
   /// Maps to `setPracticeGoal(goalType)` — goalType is `EXAM_PREP` or `ABILITY_IMPROVEMENT`.
   Future<String> setPracticeGoal(String goalType) async {
     final data = await _client.query(
