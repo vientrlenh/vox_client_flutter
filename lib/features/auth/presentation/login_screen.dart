@@ -19,10 +19,10 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  // Điền sẵn tài khoản học sinh demo (seed bằng DemoEducationDataInitializer, bật qua
-  // `demo-data.enabled=true` -- đã bật sẵn trong vox/.env) để test nhanh -- XOÁ 2 dòng
-  // default text này trước khi build bản thật.
-  final _loginController = TextEditingController(text: 'student1a.demosch01@vox.demo');
+  final _loginController = TextEditingController();
+  // Mật khẩu demo giữ lại để gõ tay đỡ mất công lúc thử nhiều tài khoản (mọi tài khoản seed
+  // bằng DemoEducationDataInitializer đều dùng chung mật khẩu này). Email thì bỏ điền sẵn --
+  // mỗi lần đăng nhập là một tài khoản khác nhau.
   final _passwordController = TextEditingController(text: 'Password@123');
   bool rememberMe = true;
   bool obscurePassword = true;
