@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 
 import '../storage/secure_storage.dart';
 import 'api_endpoints.dart';
+import 'csrf_interceptor.dart';
 import 'session_cookies.dart';
 
 /// Làm mới access token khi nó hết hạn, dùng chung cho MỌI Dio trong app.
@@ -44,6 +45,9 @@ class TokenRefresher {
       ),
     );
     await SessionCookies.attach(dio);
+    // Sau kho cookie: /auth/refresh đọc cookie refresh_token nên backend bắt buộc kèm token
+    // CSRF, mà token đó lấy từ chính cookie XSRF-TOKEN trong kho vừa gắn ở trên.
+    dio.interceptors.add(CsrfInterceptor());
     _client = dio;
     return dio;
   }

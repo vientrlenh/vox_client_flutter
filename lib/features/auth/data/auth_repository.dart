@@ -51,26 +51,38 @@ class AuthRepository {
     PushMessagingService.registerDevice();
   }
 
-  /// gỡ thiết bị nhận push trc (request cần header Authorization, còn
-  /// token thì sắp bị xoá), rồi mới xoá token cục bộ.
+  /// Gỡ thiết bị nhận push và thu hồi phiên phía server TRƯỚC, rồi mới xoá phiên cục bộ.
   Future<void> logout() async {
-    // Hai bước, THỨ TỰ quan trọng -- gộp cả hai nhánh vì chúng lo hai việc khác nhau.
+    // Ba bước, THỨ TỰ là phần quan trọng nhất.
     //
     // 1. Gỡ thiết bị nhận push TRƯỚC: request đó cần header Authorization, mà token thì sắp bị
     //    xoá. Bỏ bước này thì máy vẫn nhận thông báo của tài khoản đã đăng xuất.
-    // 2. clearSession() thay cho clearAccessToken/clearRefreshToken: nó xoá cả COOKIE, mà
+    // 2. Thu hồi phiên phía server. Cũng phải chạy TRƯỚC clearSession(): lời gọi này cần cả
+    //    access token lẫn cookie refresh_token, và clearSession() xoá đúng hai thứ đó.
+    // 3. clearSession() thay cho clearAccessToken/clearRefreshToken: nó xoá cả COOKIE, mà
     //    refresh token nằm chính ở đó chứ không phải trong secure storage -- AuthController trả
     //    refreshToken = null trong body và chỉ set cookie. Chỉ xoá token thì cookie phiên cũ
     //    còn nguyên, và người đăng nhập sau trên cùng máy có thể bị làm mới nhầm sang phiên
     //    của người trước.
-    //
-    // Không gọi API đăng xuất: backend không có endpoint nào cho việc đó (đã kiểm
-    // AuthController).
     try {
       await PushMessagingService.unregisterDevice();
     } catch (_) {
       // Gỡ thiết bị hỏng không được phép chặn đăng xuất.
     }
+
+    // Nuốt lỗi có chủ đích: bước dưới xoá sạch phiên cục bộ bất kể kết quả, nên ném lỗi ra
+    // ngoài chỉ tạo ra trạng thái tệ nhất -- người dùng đã bấm đăng xuất mà vẫn bị giữ lại
+    // trong app. Backend cũng được viết theo đúng giao kèo đó: /logout luôn trả 200, kể cả khi
+    // không có gì để thu hồi.
+    try {
+      final deviceId = await _secureStorage.getDeviceId();
+      if (deviceId != null && deviceId.isNotEmpty) {
+        await _authApi.logout(deviceId: deviceId);
+      }
+    } catch (_) {
+      // Mất mạng hay 403 CSRF đều không được phép chặn đường đăng xuất.
+    }
+
     await TokenRefresher.clearSession();
   }
 }

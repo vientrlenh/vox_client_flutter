@@ -20,11 +20,16 @@ class ApiEndpoints {
   /// Xác thực Google idToken lấy được native trên app (khác hẳn luồng redirect
   /// trình duyệt mà web dùng) -- backend trả thẳng accessToken/refreshToken trong body vì app không dùng cookie.
   static const String googleLogin = "/v1/auth/oauth2/google/token";
-  // Không có endpoint đăng xuất phía backend: logout chỉ gỡ thiết
-  // bị nhận push rồi xoá token cục bộ -- xem AuthRepository.logout().
-  /// Web gửi refresh token qua cookie HttpOnly; app không có cookie jar nên gửi
-  /// thẳng trong body (xem `ApiClient._refreshAccessToken`) và backend trả
-  /// refreshToken mới lại trong body thay vì chỉ set cookie.
+  /// Thu hồi phiên phía server. Xoá token cục bộ thôi là chưa đủ: cookie refresh_token còn
+  /// hiệu lực trọn 72 giờ trên server, nên phiên của người vừa đăng xuất vẫn sống -- trên máy
+  /// dùng chung ở trường thì đó là phiên không ai với tới được mà cũng chưa ai thu hồi.
+  ///
+  /// Đọc cookie nên BẮT BUỘC kèm header CSRF, giống /refresh -- xem [CsrfInterceptor].
+  static const String logout = "/v1/auth/logout";
+
+  /// Refresh token KHÔNG nằm trong body: `AuthController` trả `refreshToken = null` và chỉ
+  /// set cookie httpOnly, còn endpoint này đọc lại đúng cookie đó (`@CookieValue`). App giữ
+  /// cookie bằng [SessionCookies] và kèm token CSRF bằng [CsrfInterceptor].
   static const String refresh = "/v1/auth/refresh";
   /// Thiết bị nhận thông báo đẩy. Định danh là FID (Firebase Installation ID),
   /// KHÔNG phải FCM token -- backend gửi push bằng `MulticastMessage.addAllFids`.

@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import '../storage/secure_storage.dart';
 import 'api_endpoints.dart';
 import 'auth_interceptor.dart';
+import 'csrf_interceptor.dart';
 import 'session_cookies.dart';
 
 class ApiClient {
@@ -38,6 +39,9 @@ class ApiClient {
     // token phải được kho cookie nhận ngay tại đây -- không có nó thì mọi lượt refresh về sau
     // (kể cả từ GraphQLClient) đều thiếu cookie và trượt.
     _dio.interceptors.add(SessionCookies.lazyInterceptor());
+    // Ngay sau kho cookie: đăng xuất đi qua client này và /auth/logout đọc cookie refresh_token,
+    // nên backend đòi token CSRF -- gửi mỗi cookie là 403. Xem [CsrfInterceptor].
+    _dio.interceptors.add(CsrfInterceptor());
     // Bản cũ có onError nhưng chỉ handler.next(error) -- tức thấy 401 rồi thả qua. Nay 401 sẽ
     // làm mới token và chạy lại request.
     _dio.interceptors.add(AuthInterceptor(storage: _secureStorage));
